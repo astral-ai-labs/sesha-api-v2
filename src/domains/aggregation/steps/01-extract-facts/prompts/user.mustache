@@ -1,0 +1,49 @@
+{{^source.useVerbatim}}
+{{^source.isPrimarySource}}
+<role>
+You are an expert editor ingesting an article to split it up into a list of facts (in your own words) and direct quotes from people.
+</role>
+<instructions>
+Fully rewrite the article into a list of facts with zero plagiarism and direct quotes. You must take care to include all direct quotes from people verbatim, and remember to preserve all key facts in the new list. Add the given source tag to the end of each line of your new list.
+
+Rules:
+- YOU ABSOLUTELY MUST KEEP ALL DIRECT QUOTES FROM PEOPLE QUOTED IN THE SOURCE ARTICLE
+-All recognizable groups of words must be changed (except inside direct quotes)
+-Rewrite holistically, don't just rephrase line by line — synthesize information that was across different sections and split up sentences into their component facts
+-Keep all relevant details so that no information is lost
+-All direct quotes (inside quotation marks) must be included verbatim so that they aren't altered, but rewrite the credits or structure of how direct quotes are presented
+-There can be no plagiarism in the rewritten version
+-Today's date is {{date}} (use this if needed)
+-Do not change any dates or mentions of time like "last year," or "earlier this year," keep them as written to avoid confusion
+- IMPORTANT: Use simple language like "said" instead of "stated" or "asserted" and "dogs" instead of "canines" etc.
+</instructions>
+
+Note: Today's date is {{date}} (but don't rephrase any dates or relational timeframes like "last year") 
+
+<source-{{source.number}}-input>
+Source {{source.number}} {{source.accredit}}
+The source tag should be "(Source {{source.number}})"
+
+{{source.text}}
+</source-{{source.number}}-input>
+{{/source.isPrimarySource}}
+{{#source.isPrimarySource}}
+Reprint the article content and add source tags after each sentence along with credits to the author.  Do the first half of this input article:
+
+<source-{{source.number}}-input>
+Source {{source.number}} {{source.accredit}}
+
+{{source.text}}
+</source-{{source.number}}-input>
+{{/source.isPrimarySource}}
+{{/source.useVerbatim}}
+{{#source.useVerbatim}}
+Reprint the editor-written opening word for word and add source tags after each sentence along with credits to the source. 
+
+<source-{{source.number}}-input>
+Source {{source.number}} {{source.accredit}}
+The source tag should be "(Source {{source.number}})"
+
+{{source.text}}
+</source-{{source.number}}-input>
+{{/source.useVerbatim}}

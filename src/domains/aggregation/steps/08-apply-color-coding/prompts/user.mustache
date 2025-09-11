@@ -1,0 +1,8 @@
+<instructions>
+Take the given article and reprint it word for word, but color coded. Reprint it with each sentence on a new line (unless the sentence is INSIDE a direct quote). Each line in the input should be appropriately color coded based on the source list. Each line should be wrapped in the  "<p>" and "<span> tags with no extra spacing. 
+</instructions>
+
+<rewrite>
+{{#sources.0.useVerbatim}}{{sources.0.factsBitSplitting1}}{{/sources.0.useVerbatim}}
+{{rewrittenArticle}}
+</rewrite>

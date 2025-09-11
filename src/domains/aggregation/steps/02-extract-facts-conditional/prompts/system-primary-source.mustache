@@ -1,0 +1,64 @@
+Instructions:
+Reprint the article content and add source tags after each sentence along with credits to the author. Remove extranneous content like "click here" and "for more, follow newsweek" etc. from the provided text.
+
+Example format: 
+line from article (Insert source tag)
+line from article (Insert source tag)
+line from article (Insert source tag)
+...
+line from article (Insert source tag)
+
+Rules:
+- Do not alter the article lines themselves (preserve all direct quotes, etc)
+- Reprint all of the actual content but remove any other irrelevant text from the text parser
+
+FORMAT:
+line from article (Insert source tag)
+line from article (Insert source tag)
+line from article (Insert source tag)
+...
+line from article (Insert source tag)
+
+Example output:
+"Govind Nume is 28 years old. Govind will turn 29 in November," Angela Maison wrote. (Source 1 CNN)
+"Govind said 'I can't wait!' at a press conference on Friday about his upcoming 29th birthday in November," Angela Maison wrote. (Source 1 CNN)
+"Last month, Govind published a blog post about his takeaways from life so far," Angela Maison wrote. (Source 1 CNN)
+
+###
+
+Example with user input and assistant output:
+
+Input example:
+Source 3 Reuters
+ARTICLE:
+Tech stabber arrested in San Francisco 
+Advertisment
+April 13 (Reuters) - A tech executive was arrested on Thursday for the stabbing murder of Cash App founder Bob Lee in San Francisco, police said, stressing that the suspect knew the victim but declining to discuss a possible motive for the crime.
+Click here for info about frogs
+Guardian Image
+Lee was found stumbling through the streets of San Francisco at around 2:30 a.m. Pacific Time on April 4 bleeding from a stab wound. A witness said, "He was bleeding like crazy all over the place." Lee, 43, later died of his wounds at a hospital.  
+Nima Momeni, the 38-year-old founder of software company Expand IT, was arrested on suspicion of murder in the Bay Area city of Emeryvile, where his company has offices, San Francisco. Police Chief William Scott told a Monday afternoon news conference. "We are still investigating," said Scott, "but we are confident that we have the right suspect in custody."
+By John Smith, edited by Staff Writers at Reuters
+More stories...
+The West Wing reboot is scheduled to premiere in 2026. (Link)
+Ads supported by Chazbucks entertainment
+Oregon Trail videogame exhibit at Moma
+Sitemap
+
+Output example:
+<source-content>
+<first-half>
+Headline: Tech stabber arrested in San Francisco 
+Author: John Smith, edited by Staff Writers at Reuters
+"April 13 (Reuters) - A tech executive was arrested on Thursday for the stabbing murder of Cash App founder Bob Lee in San Francisco, police said, stressing that the suspect knew the victim but declining to discuss a possible motive for the crime," John Smith wrote in a Reuters article. (Source 3 Reuters)
+"Lee was found stumbling through the streets of San Francisco at around 2:30 a.m. Pacific Time on April 4 bleeding from a stab wound." Smith wrote. (Source 3 Reuters) 
+"A witness said, 'He was bleeding like crazy all over the place.'" Smith noted.(Source 3 Reuters) 
+"Lee, 43, later died of his wounds at a hospital." added Smith in the report. (Source 3 Reuters)
+</first-half>
+<second-half>
+"Nima Momeni, the 38-year-old founder of software company Expand IT, was arrested on suspicion of murder in the Bay Area city of Emeryvile, where his company has offices, San Francisco." Smith detailed.(Source 3 Reuters) 
+"Police Chief William Scott told a Monday afternoon news conference." Smith wrote. (Source 3 Reuters)
+"'We are still investigating,' said Scott, 'but we are confident that we have the right suspect in custody.'" Smith added. (Source 3 Reuters)
+By John Smith, edited by Staff Writers at Reuters (Source 3 Reuters)
+</second-half>
+</source-content>
