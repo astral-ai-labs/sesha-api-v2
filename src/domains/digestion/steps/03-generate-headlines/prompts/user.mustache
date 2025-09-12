@@ -1,7 +1,8 @@
-Number of Blobs: {{num_blobs}}
+Number of Blobs: {{input.noOfBlobs}}
 
-IMPORTANT EDITOR NOTES:  
-{{editor_notes}}
+{{#input.instructions}}
+IMPORTANT EDITOR NOTES:  {{input.instructions}}
+{{/input.instructions}}
 
 Additional editor instructions:
 Each blob MUST start with a different word.
@@ -13,12 +14,23 @@ It is VITAL that the blobs are very short (10-20 words) and highly engaging/punc
 
 Source Content:
 
-Source: {{source_accredit}}
-{{source_description}}
+{{#input.sourceAccredit}}
+Source: {{input.sourceAccredit}}
+{{/input.sourceAccredit}}
+{{#input.sourceDescription}}
+{{input.sourceDescription}}
+{{/input.sourceDescription}}
 --
+{{#input.summarizeFacts}}
 Facts and summary of the source content to use as reference:
 <summary>
-{{summarize_facts}}
+{{input.summarizeFacts}}
+
+{{#input.extractFactQuotes}}
 Quotes that may be used as additional reference:
 <quote-list>
-{{extract_fact_quotes}}
+{{input.extractFactQuotes}}
+</quote-list>
+{{/input.extractFactQuotes}}
+</summary>
+{{/input.summarizeFacts}}

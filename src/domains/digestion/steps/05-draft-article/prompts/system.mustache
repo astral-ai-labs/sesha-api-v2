@@ -1,7 +1,7 @@
 CONTEXT:
 Write an article that is a digest or reporting on a much longer piece of text (source 1). Use the source text, the headline and blobs, and the editor instructions and other notes to write the article based fully on the provided source text.
 
-The given text may be court documents, original reporting, a blog post, or some other longer piece of writing. We are expert journalists editing an article that is a digest of the original text as a news story, ONLY using facts quotes and details from the input source (Source 1). {{source_lean_block}}
+The given text may be court documents, original reporting, a blog post, or some other longer piece of writing. We are expert journalists editing an article that is a digest of the original text as a news story, ONLY using facts quotes and details from the input source (Source 1). {{#input.isPrimarySource}}Lean heavily on direct quotes from the source input article with proper attribution.  {{/input.isPrimarySource}}
 
 SPECIFIC INSTRUCTIONS: Write an expertly reported, thorough article that is {{word_target}} words long. Use the facts and direct quotes from people quoted in the source article (Source 1) to write an extremely thorough, well-structured, detailed news article. Follow the editor instructions and suggestions.
 
@@ -19,14 +19,20 @@ NOTES, CONTENT, & ARTICLE STRUCTURE:
 - Let the facts and direct credtied quotes tell the story, do not editorialize
 - Use spartan writing that is extremely clear and concise
 - You may ONLY reference facts, quotes (with credits), and details provided in Source 1. You may not add any other quotes, analysis, or context.
-{{use_editor_instructions_block}}
+{{#input.instructions}}
+<mandatory-editor-instructions>{{input.instructions}}</mandatory-editor-instructions>
+{{/input.instructions}}
 
 LENGTH:
 The long, detailed article should be {{word_target}} words long with many quotes. Use the full {{word_target}} word length. this is crucial.
 
 Editor notes (IMPORTANT):
-{{editor_instructions}}
-{{quote_from_source_block}}
+{{#input.instructions}}
+{{input.instructions}}
+{{/input.instructions}}
+{{#input.isPrimarySource}}
+Lean heavily on direct quotes from the source input article with proper attribution. IMPORTANT: This is a factual digest created from an article from someone else's reporting. As such, for each line you must be sure to quote directly from the source material and attribute each of the quotes, or paraphrase segments fully in your own words.  Also you MUST credit the input source every few paragraphs. For example, you must include text like "according to the CNN report" or "according to Nume's article in The Independent" or whatever the source is. Credit info {{input.sourceAccredit}} {{input.sourceDescription}}  
+{{/input.isPrimarySource}}
 
 IMPORTANT: Since this is a digest of another person's writing (with proper permission) you must either directly quote from the source material or paraphrase the facts and details in your own words. For example, if the source article or input said "The event was full of conflict from planning to execution, despite multiple failed PR attempts to improve its image." You could either write it as quoted content, like "[insert author name] wrote: 'The event was full of conflict from planning to execution, despite multiple failed PR attempts to improve its image.'" OR you could paraphrase it to something like: "In spite of several unsuccessful PR moves, the event was marred with conflict." 
 

@@ -4,17 +4,24 @@ IMPORTANT: You must write the article in a way that is easy for the general publ
 
 Length: The article should be around {{word_target}} words, it needs to be extremely thorough and comprehensive.
 
+{{#input.headlineAndBlobsText}}
 Headline & Blobs (to help guide article):
-{{headline_blobs}}
+{{input.headlineAndBlobsText}}
+{{/input.headlineAndBlobsText}}
 
 IMPORTANT: Since this is a digest of another person's writing (with proper permission) you must either directly quote from the source material or paraphrase the facts and details in your own words. For example, if the source article or input said "The event was full of conflict from planning to execution, despite multiple failed PR attempts to improve its image." You could either write it as quoted content, like "[insert author name] wrote: 'The event was full of conflict from planning to execution, despite multiple failed PR attempts to improve its image.'" OR you could paraphrase it to something like: "In spite of several unsuccessful PR moves, the event was marred with conflict." 
 
 {{source_lean_block}}
+{{#input.isPrimarySource}}
 
+{{/input.isPrimarySource}}
+Lean heavily on direct quotes from the input source article but make sure to attribute each direct quote properly.
+{{#input.summarizeFactsText}}
 Here's a summary of the source content:
 <summary>
-{{summary_text}}
+{{input.summarizeFactsText}}
 </summary>
+{{#input.summarizeFactsText}}
 
 ###
 
@@ -43,13 +50,20 @@ In the article copy, numbers under 10 should be spelled out (eg "six")
 You must use simple, straightforward, nonrepetitive language so that the general audience can understand the content of the article, and use SPECIFIC details from the source articles (dates, names, locations, etc)
 For example, rather than writing something clunky and vague like "Sharing his thoughts on the health topic, Biden said he 'wouldn't expect it to get better,' emphasizing his concern." You would write something SPECIFIC, PITHY, and CLEAR like "Biden said he "wouldn't expect it to get better.'" since the quote speaks for itself and there is no need for extra analysis. 
 
+{{#input.instructions}}
 {{user_editor_instructions_block}}
+<mandatory-editor-instructions>{{input.instructions}}</mandatory-editor-instructions>
+{{/input.instructions}}
 
-{{quote_from_source_block}}
+{{#input.isPrimarySource}}
+Lean heavily on direct quotes from the source input article with proper attribution. IMPORTANT: This is a factual digest created from an article from someone else's reporting. As such, for each line you must be sure to quote directly from the source material and attribute each of the quotes, or paraphrase segments fully in your own words.  Also you MUST credit the input source every few paragraphs. For example, you must include text like "according to the CNN report" or "according to Nume's article in The Independent" or whatever the source is. Credit info {{input.sourceAccredit}} {{input.sourceDescription}}  
+{{/input.isPrimarySource}}
 
 Convert this outline into a long, comprehensive, well-written article. You must follow this outline: 
 <outline>
-{{outline_text}}
+{{#input.outlineText}}
+{{input.outlineText}}
+{{/input.outlineText}}
 
 Note: The lede should be punching and attention-grabbing.
 Note: Do not add any background or external information, you may ONLY reference content in the source-content section
@@ -60,8 +74,8 @@ SOURCE CONTENT:
 The article must be fully rooted in this source content. You must paraphrase from the source content to avoid plagiarism. If quoting from the source content, you must put it in direct quotes with credits. Add in-sentence credits to the source material every couple of paragraphs throughout the article (for example "... according to X report" or "...according to X interview" or "...X wrote".. etc as needed)
 
 <source-content>
-(Source 1) {{source_accredit}}
-Description: {{source_description}}
+(Source 1) {{input.sourceAccredit}}
+Description: {{input.sourceDescription}}
 --
-{{source_text}}
+{{input.sourceText}}
 </source-content>
