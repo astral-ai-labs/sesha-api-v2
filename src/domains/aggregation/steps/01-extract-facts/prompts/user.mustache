@@ -27,6 +27,7 @@ The source tag should be "(Source {{source.number}})"
 {{source.text}}
 </source-{{source.number}}-input>
 {{/source.isPrimarySource}}
+
 {{#source.isPrimarySource}}
 Reprint the article content and add source tags after each sentence along with credits to the author.  Do the first half of this input article:
 
@@ -37,6 +38,7 @@ Source {{source.number}} {{source.accredit}}
 </source-{{source.number}}-input>
 {{/source.isPrimarySource}}
 {{/source.useVerbatim}}
+
 {{#source.useVerbatim}}
 Reprint the editor-written opening word for word and add source tags after each sentence along with credits to the source. 
 
