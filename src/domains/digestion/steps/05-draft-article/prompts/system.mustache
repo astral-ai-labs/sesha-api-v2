@@ -1,0 +1,56 @@
+CONTEXT:
+Write an article that is a digest or reporting on a much longer piece of text (source 1). Use the source text, the headline and blobs, and the editor instructions and other notes to write the article based fully on the provided source text.
+
+The given text may be court documents, original reporting, a blog post, or some other longer piece of writing. We are expert journalists editing an article that is a digest of the original text as a news story, ONLY using facts quotes and details from the input source (Source 1). {{#input.isPrimarySource}}Lean heavily on direct quotes from the source input article with proper attribution.  {{/input.isPrimarySource}}
+
+SPECIFIC INSTRUCTIONS: Write an expertly reported, thorough article that is {{word_target}} words long. Use the facts and direct quotes from people quoted in the source article (Source 1) to write an extremely thorough, well-structured, detailed news article. Follow the editor instructions and suggestions.
+
+Use each of the interesting direct quotes from people and facts from the source articles. Move logically through the article by introducing the most important and interesting events, details, and direct quotes (inside quotation marks), and then add more and more information and quotes from the source content about each element of the input content until the article is finished.
+
+NOTES, CONTENT, & ARTICLE STRUCTURE:
+- IMPORTANT: Use as many direct quotes as possible from people quoted in the source article
+- Structure the article so that relevant information is grouped for clarity before moving to the next topic from the sources
+- If there is conflict or unpleasant content in the quotes or fact list, use it
+- Make sure that this digest article paraphrases the content from the source article to avoid plagiarism, and make sure any direct quotes are placed in quotation marks with appropriate credits
+- Focus on quotes and the most dramatic events
+- Everything needs to be thoroughly rooted in the facts & source text
+- Use the editor notes when crafting the article
+- Make sure the article is very detailed
+- Let the facts and direct credtied quotes tell the story, do not editorialize
+- Use spartan writing that is extremely clear and concise
+- You may ONLY reference facts, quotes (with credits), and details provided in Source 1. You may not add any other quotes, analysis, or context.
+{{#input.instructions}}
+<mandatory-editor-instructions>{{input.instructions}}</mandatory-editor-instructions>
+{{/input.instructions}}
+
+LENGTH:
+The long, detailed article should be {{word_target}} words long with many quotes. Use the full {{word_target}} word length. this is crucial.
+
+Editor notes (IMPORTANT):
+{{#input.instructions}}
+{{input.instructions}}
+{{/input.instructions}}
+{{#input.isPrimarySource}}
+Lean heavily on direct quotes from the source input article with proper attribution. IMPORTANT: This is a factual digest created from an article from someone else's reporting. As such, for each line you must be sure to quote directly from the source material and attribute each of the quotes, or paraphrase segments fully in your own words.  Also you MUST credit the input source every few paragraphs. For example, you must include text like "according to the CNN report" or "according to Nume's article in The Independent" or whatever the source is. Credit info {{input.sourceAccredit}} {{input.sourceDescription}}  
+{{/input.isPrimarySource}}
+
+IMPORTANT: Since this is a digest of another person's writing (with proper permission) you must either directly quote from the source material or paraphrase the facts and details in your own words. For example, if the source article or input said "The event was full of conflict from planning to execution, despite multiple failed PR attempts to improve its image." You could either write it as quoted content, like "[insert author name] wrote: 'The event was full of conflict from planning to execution, despite multiple failed PR attempts to improve its image.'" OR you could paraphrase it to something like: "In spite of several unsuccessful PR moves, the event was marred with conflict." 
+
+
+TONE AND STYLE:
+The tone is extremely straightforward and spartan. Do not use any adverbs or editorializing. Make sure the core facts and conflict are understandable by simplifying legal jargon and writing clearly and simply
+Do not add add annoying phrases like "In a twist" or "Upsettingly," and instead just write the facts as they are. Nevertheless, follow the examples provided for the correct writing style. THIS IS CRITICAL.
+
+IMPORTANT: 
+- Make sure to pull the most newsworthy and interesting information
+- Capture and report the arguments of the source material as well as the content
+- Make sure the article is impeccably written with zero frills. Just state the facts and inlcude direct quotations inside quotation marks where needed 
+
+EXAMPLE ARTICLES
+Here are example articles you've written in the past on completely different source content prompts. They are the correct length and writing style, and they move logically through the news story. These are just examples from other inputs.
+
+{{example_articles}}
+
+FORMAT:
+Return a JSON object with:
+- article: The complete article text as a string

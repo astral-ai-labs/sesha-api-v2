@@ -1,0 +1,87 @@
+We are in the process of writing an article that is a digest/report on a much longer text. The digest is a news article that reports on longer source content which may be an opinion piece, a legal brief, another article, a scientific paper, etc.
+
+Credit the ideas and conclusions in the source article to the author or authoring body (for example "In analysis in the Independent, Nume argues XYZ") If it's a court decision or scientific paper, the news story should detail what the authors or council etc said or discovered in the source content. 
+
+Use the source article and description, the headline and blobs, and the editor instructions and other source material to craft the article outline based on the source content. You must write at least 10 key points.
+
+Order the key points so that the article starts with the most recent/important information or development for the new article (dictated by the headline) and then moves logically through the story by covering each topic/angle/development in full before moving on. The article outline must be impeccably accurate. 
+
+Do not repeat content across key facts (NO REPETITION)
+
+IMPORTANT: Each key point must be a 100% factually accurate amalgamation of multiple facts and direct quotes from people across the whole of the source article input. 
+
+There may be many facts and quotes in the source articles, but when writing a key point it must be facutally accurate. For example, a source article may speak of an event (like a bad interview), and another may have a quote about a different interview. When combining sources, you must provide context so that it's clear when, where, how, and what happened. In that example, you couldn't combine that quote with that key point since the quote was about a DIFFERENT event. Everything must be impeccably reported with 100% factual and contextual accuracy.
+
+Here is the format:
+
+FORMAT:
+<outline>
+KEY POINTS IN ORDER:
+1: Cover/inlcude (insert key point (this must be the same angle as the headline)) (insert source tag)
+2: Cover/inlcude (insert next key point about the main story by weaving together the information from the source articles) (insert source tag)
+3: Cover/inlcude (insert next key point about the main story by weaving together the information from the source articles) (insert source tag)
+4: Cover/inlcude(insert next key point about the main story by weaving together the information from the source articles) (insert source tag)
+5: Cover/inlcude (insert next key point about the main story by weaving together the information from the source articles) (insert source tag)
+6: Cover/inlcude(insert next key point about the main story by weaving together the information from the source articles) (insert source tag)
+7: Cover/inlcude(insert next key point about the main story by weaving together the information from the source articles) (insert source tag)
+8: Cover/inlcude(insert next key point about the main story by weaving together the information from the source articles) (insert source tag)
+9: Cover/inlcude(insert next key point about the main story by weaving together the information from the source articles) (insert source tag)
+10: Cover/inlcude(insert next key point about the main story by weaving together the information from the source articles) (insert source tag)
+...
+N: Cover/inlcude(insert next key point about the main story by weaving together the information from the source articles) (insert source tag)
+</outline>
+
+(do not write a conclusion)
+
+RULES:
+- KEY POINT 1 must be the same angle as the headline
+- KEY POINT 1 is NOT a summary, it's just the most relevant and important first fact of the article as determined by the headline
+- You must paraphrase the source content to avoid plagiarism
+- You must write at least 10 key points
+- After all of the key points, you must write "NOTE: Do not write a conclusion/summary"
+
+
+###
+
+{{#input.headlineAndBlobsText}}
+Headline & Blobs (to help guide article):
+{{input.headlineAndBlobsText}}
+{{/input.headlineAndBlobsText}}
+
+{{#input.editorInstructionsBlock}}
+{{input.editorInstructionsBlock}}
+{{/input.editorInstructionsBlock}}
+
+Make sure to include the author or context of the source in key point one (was it an opinion piece by x author? was it a study published by x group? etc)
+
+Make sure the article will be easy to understand, even if the source text is complex (like a study or press release).
+Make sure that the outline and article is extremely long and comprehensive, and that complex concepts or phrases are explained (using the source content)
+
+###
+
+Here are source articles that should be used for reference:
+
+{{#source.accredit}}
+Source 1: {{source.accredit}}
+{{/source.accredit}}
+{{#source.description}}
+Description: {{source.description}}
+{{/source.description}}
+--
+{{source.text}}
+
+
+###
+{{#summarizeFacts}}
+Summary and facts to use as reference:
+<summary>
+{{summarizeFacts}}
+</summary>
+{{/summarizeFacts}}
+
+{{#extractFactQuotes}}
+Quotes to use as additional reference:
+<quote-list>
+{{extractFactQuotes}}
+</quote-list>
+{{/extractFactQuotes}}
