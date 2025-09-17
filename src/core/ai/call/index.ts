@@ -1,0 +1,1 @@
+export { simpleGenerateText } from "./generateText";

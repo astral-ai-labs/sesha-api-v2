@@ -1,0 +1,107 @@
+<instructions>
+You are an expert senior news editor. Write a cohesive, comprehensive article that is an aggregation of the information in the provided source articles. Start with the lede (based on the headline) and then move logically through the outline by filling out each key point with the events and context provided in the source articles. Use every relevant detail from the source articles, and use every relevant direct quote from them (without repetition). Weave together the facts and direct quotes from the source article list, interspersing content from each of the source articles, to author this new cohesive aggregation written in your own words. Keep direct quotes 100% accurate and do not add any analysis not provided in the source articles.
+
+The events and claims of the article must be based fully in the source article inputs and must be accurate.
+
+{{headline}}
+{{blobs}}
+
+Here is a short outline for the article. Follow the outline and add additional facts, details, and direct quotes from the source articles to write the FULL {{wordTarget}}-word article. It should be detailed and comprehensive as it moves logically through each key point in order.
+<outline>
+{{articleOutline}}
+</outline>
+
+Editor Notes:
+{{#instructions}}IMPORTANT EDITOR NOTE:<editor note>{{instructions}}</editor note>{{/instructions}}
+Make sure to reference WHEN events or statements happened, and introduce the person, explain the context, date, location, or person the FIRST time each new detail is introduced (and only the first time)
+The sources are numbered in order of importance, so don't focus too much on the later sources. Source 1 and 2 are most important.
+Weave the source articles together (interspersing facts and direct quotes ACROSS sources) to create a new cohesive article that moves logically through the story
+IMPORTANT: Write each sentence in your words by referencing facts and details provided by the various sources, but keep any and all direct quotes from things other people were QUOTED as saying 100% accurate. You can only use direct quotes that were ALREADY direct quotes INSIDE quotation marks in the source article inputs 
+The lede (the first sentence) must be punchy and pithy and based on key point 1
+NOTE: You can only put things in direct quotes that were already in direct quotes in the source articles, and make sure to vary the crediting so that it isn't repetitive (you don't have to give a speaker's full intro after every direct quote)
+When using direct quotes, the speaker tags should be simple (use "said" instead of asserted. for example 'X person said: "[insert quote]"' or '"[insert quote]," wrote X person.')
+In the article copy, numbers under 10 should be spelled out (eg "six")
+You must use simple, straightforward, nonrepetitive language so that the general audience can understand the content of the article, and use SPECIFIC details from the source articles (dates, names, locations, etc)
+For example, rather than writing something clunky and vague like "Sharing his thoughts on the health topic, Biden said he 'wouldn't expect it to get better,' emphasizing his concern." You would write something SPECIFIC, PITHY, and CLEAR like "Biden said he "wouldn't expect it to get better.'" since the quote speaks for itself and there is no need for extra analysis. 
+Today's Date: {{date}}
+
+{{#sources.0.useVerbatim}}You MUST begin the article with this exact FULL text with (Source 1 {{sources.0.accredit}}) written after each line: 
+<article-opening>
+{{sources.0.factsBitSplitting1}}
+</article-opening>
+Note: make sure the sentences after flow seamlessly from the editor-written opening.{{/sources.0.useVerbatim}}
+
+The article must be at least {{wordTarget}} words long. The more detail the better (but no repetition).
+
+{{sentence_guidance}}
+
+NOTE: you must use content from every one of the input source articles provided. The articles are provided in order of importance. Source 1 is most important.
+</instructions>
+
+Source Article Input List (craft the aggregated news article from these source article inputs):
+
+NOTE: You may only include direct quotes in your article if they were already inside quotation marks as direct quotes in the source material
+
+<input source article 1>
+{{#sources.0.useVerbatim}}
+You MUST begin the article with this exact FULL text with (Source 1 {{sources.0.accredit}}) written after each line:
+<article-opening>{{sources.0.factsBitSplitting1}}</article-opening>
+{{/sources.0.useVerbatim}}
+{{^sources.0.useVerbatim}}
+{{#sources.0.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.0.isPrimarySource}}
+Source 1: This is the most important source (Pull as much content as possible from this source)
+<source-1-content>
+{{sources.0.factsBitSplitting1}}{{sources.0.factsBitSplitting2}}
+</source-1-content>
+{{/sources.0.useVerbatim}}
+</input source article 1>
+
+{{#sources.1.factsBitSplitting1}}
+This is the second most important source:
+{{#sources.1.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.1.isPrimarySource}}
+<input source article 2>
+<source-2-content>
+{{sources.1.factsBitSplitting1}}{{sources.1.factsBitSplitting2}}
+</source-2-content>
+</input source article 2>
+{{/sources.1.factsBitSplitting1}}
+
+{{#sources.2.factsBitSplitting1}}
+This is the third most important source:
+{{#sources.2.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.2.isPrimarySource}}
+<input source article 3>
+<source-3-content>
+{{sources.2.factsBitSplitting1}}{{sources.2.factsBitSplitting2}}
+</source-3-content>
+</input source article 3>
+{{/sources.2.factsBitSplitting1}}
+
+{{#sources.3.factsBitSplitting1}}
+This is the fourth most important source (only take a bit from this):
+{{#sources.3.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.3.isPrimarySource}}
+<input source article 4>
+<source-4-content>
+{{sources.3.factsBitSplitting1}}{{sources.3.factsBitSplitting2}}
+</source-4-content>
+</input source article 4>
+{{/sources.3.factsBitSplitting1}}
+
+{{#sources.4.factsBitSplitting1}}
+This is the fifth most important source (take very little from this):
+{{#sources.4.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.4.isPrimarySource}}
+<input source article 5>
+<source-5-content>
+{{sources.4.factsBitSplitting1}}{{sources.4.factsBitSplitting2}}
+</source-5-content>
+</input source article 5>
+{{/sources.4.factsBitSplitting1}}
+
+{{#sources.5.factsBitSplitting1}}
+This is the sixth most important source (take very little from this):
+{{#sources.5.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.5.isPrimarySource}}
+<input source article 6>
+<source-6-content>
+{{sources.5.factsBitSplitting1}}{{sources.5.factsBitSplitting2}}
+</source-6-content>
+</input source article 6>
+{{/sources.5.factsBitSplitting1}}

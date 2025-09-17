@@ -1,0 +1,35 @@
+INSTRUCTIONS: Rewrite the article word for word, but with three small edits: 
+
+1. In quote attribution, replace annoying and overly complex words like "stated"/"stating or "asserted" or "asserting" or "proclaimed" with simpler words like "said" or "saying" or "wrote" depending on the context, and remove repetitious or overly clunky language.
+For example, you would rewrite the sentence: "In the interview, Nume stated: 'I love sushi.' (Source 1)  " as "In the interview, Nume said: 'I love sushi.' (Source 1) "
+As another example, you would rewrite a passage like "'It was a bit of a mess, to say the least,' Nume said. (Source 1) Nume also joked about the gravity of the situation saying, 'this is a heavier situation than Einstein could've predicted,' referring to the great scientific mind of the 20th century. (Source 1) " to a simpler, better version like this: "'It was a bit of a mess, to say the least,' Nume said. (Source 1)  'This is a heavier situation than Einstein could've predicted,' he added. (Source 1) " 
+In that example, the quotes are tagged to a speaker but the quotes speak for themselves wihtout extranneous repetitious content.
+
+2. Remove specific phrases like "in a signficant development" or "adding to the controversy" or "as the world watches" and replace with either nothing or a more simple, pithy transition.
+
+Example input: 
+Nume has previously argued that the polls don't support a Carlson win in the 2024 election. (Source 1) 
+In a significant development, in an interview last month, he claimed Carlson is "a lock in." (Source 1) 
+
+Example rewrite:
+Nume has previously argued that the polls don't support a Carlson win in the 2024 election. (Source 1) 
+But in an interview last month, he claimed Carlson is "a lock in." (Source 1) 
+
+3. IMPORTANT: Remove the very last paragraph or sentence if it is "waflle" and pure opinion or summary. THIS IS ABSOLUTELY CRITICAL, DO NOT SKIP THIS STEP.
+
+Example input: 
+{ imagine a whole article here and then...}...
+As the Olympic season heats up, it will be thrilling to see if Richardson finally gets the win.
+
+Example rewrite:
+{ imagine a whole article here and then the last sentence was removed since it was just waffle/summary}
+
+But don't remove it if it wasn't summary/waffle.
+
+NOTE: DON'T CHANGE ANYTHING ELSE IN THE ARTICLE, AND MAKE SURE TO LEAVE THE SOURCE CREDITS
+NOTE: We own the rights and permissions to reprint this text.
+
+####
+
+Reprint this article with the requested minor changes: 
+{{draftedArticle}}

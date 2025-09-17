@@ -1,443 +1,93 @@
-# TypeScript & TSX Guidelines - v2
+---
+description: Rules for working with TS/TSX Projects
+globs: "*.ts,*.tsx"
+alwaysApply: false
+---
 
-**Core Principle:** Write TypeScript and React code with absolute clarity as the top priority. Choose the most straightforward solution that any developer can understand at first glance.
+**What's in here:** Complete TypeScript and React/TSX guidelines including file structure, import organization, type definitions, error handling, component patterns, custom hooks, performance optimization, and development tooling with pnpm.
 
-**Development Philosophy:**
+# TypeScript & TSX Guidelines
 
-1. **Fewest lines, straightforward over clever** → Build only when needed
-2. **One responsibility per function/component/module** → Single clear purpose
-3. **Five-minute rule** → If you cannot explain it quickly, it is too complex
-4. **Write for humans first** → Clever code is bad code
+**Write TypeScript and React code with absolute clarity as the top priority.** Keep it Simple, Stupid (KISS) - choose the most straightforward solution that any developer can understand at first glance. Readability isn't optional, it's everything. Code should tell a story that flows naturally from top to bottom.
 
-**Simple means:**
+These guidelines ensure our TypeScript and React codebases are maintainable, approachable, and immediately understandable:
 
-- Understandable in under 30 seconds
-- Clear names: `calculateMonthlyPayment()` not `calc()`
-- Max three nesting levels → Prefer early returns
-- Numbered comments for multi-step flows: `// 1️⃣ Validate → // 2️⃣ Process → // 3️⃣ Return`
+## 1. File Structure & Header
 
-## Style Conventions
-
-**TypeScript with these specifics:**
-
-- Double quotes for strings
-- Trailing commas in multi-line structures
-- Type hints everywhere
-- **Zod for all runtime validation** - Use schemas for uncertain data
-- **Favor functions over classes** - Classes only for true stateful objects
-
-**Naming Conventions:**
-
-- `camelCase` for functions, variables, props
-- `PascalCase` for components, types, interfaces
-- `SCREAMING_SNAKE_CASE` for constants
-- Prefix boolean props: `isLoading`, `hasError`, `canEdit`, `shouldShow`
-
-```typescript
-function createUserProfile(userData: CreateUserRequest, settings?: UserSettings, notifyAdmin: boolean = true): Promise<UserProfile> {
-  // Implementation
-}
-
-const MAX_FILE_SIZE_MB = 10;
-const ALLOWED_EXTENSIONS = [".jpg", ".png", ".gif", ".pdf"];
-
-// Zod for runtime validation of uncertain inputs
-const UserCreateRequestSchema = z.object({
-  email: z.string().email(),
-  name: z.string().min(2).max(100),
-  age: z.number().min(13).max(120),
-});
-
-type UserCreateRequest = z.infer<typeof UserCreateRequestSchema>;
-```
-
-## File Structure
-
-**1. Header (Required)**
+**Every TypeScript/TSX file must start with a clear header:**
 
 ```typescript
 /* ==========================================================================*/
 // userService.ts — User management and authentication operations
 /* ==========================================================================*/
 // Purpose: Handle user CRUD operations and session management
-// Sections: Imports, Types, Functions, Public API
+// Sections: Imports, Types, Helpers, Public API
 /* ==========================================================================*/
 ```
 
-**2. Imports (Four groups)**
+```tsx
+/* ==========================================================================*/
+// UserProfile.tsx — User profile display and editing component
+/* ==========================================================================*/
+// Purpose: Render user profile information with inline editing capabilities
+// Sections: Imports, Types, Component, Styles, Exports
+/* ==========================================================================*/
+```
+
+## 2. Import Organization
+
+**Three distinct groups, separated by blank lines:**
 
 ```typescript
 /* ==========================================================================*/
 // Imports
 /* ==========================================================================*/
 
-// Standard Library/Runtime --------------------------------------------------
+// Core/Node Modules ---------------------------------------------------------
 import fs from "fs";
 import path from "path";
 import { EventEmitter } from "events";
 
-// Third Party ---------------------------------------------------------------
+// External Packages ---------------------------------------------------------
+import express from "express";
 import { z } from "zod";
 import axios from "axios";
-import express from "express";
 
-// Core (App-wide) -----------------------------------------------------------
-import { DatabaseConnection } from "@/lib/database";
-import { logger } from "@/lib/logger";
-import { AppError } from "@/lib/errors";
-import { User, UserProfile } from "@/types/user";
-
-// Internal (Current Module) -------------------------------------------------
-import { validateEmail } from "./helpers";
-import { formatUserData } from "./utils";
+// Internal Modules ----------------------------------------------------------
+import { DatabaseConnection } from "../database/connection";
+import { UserModel, UserProfile } from "./models";
+import { ValidationError } from "../errors";
 ```
 
-**3. Types (Component-specific only)**
+```tsx
+/* ==========================================================================*/
+// Imports
+/* ==========================================================================*/
+
+// React & Next.js Core ----------------------------------------------------------------
+import React, { useState, useEffect, useCallback } from "react";
+
+// External Packages ---------------------------------------------------------
+import clsx from "clsx";
+import { Button, Input, Modal } from "@headlessui/react";
+
+// Internal Components & Utilities -------------------------------------------
+import styles from "./UserProfile.module.css";
+import { Icon } from "../Icon";
+import { useUserData } from "../../hooks/useUserData";
+import { formatDate } from "../../utils/dateUtils";
+```
+
+## 3. Type Definitions & Interfaces
+
+**Define clear, well-documented types at the top of files:**
 
 ```typescript
 /* ==========================================================================*/
-// Types (Component-specific only)
+// Types & Interfaces
 /* ==========================================================================*/
 
-// Only include types that are hyper-specific to this file
-interface UserProfileProps {
-  userId: string;
-  editable?: boolean;
-  onUpdate?: (user: User) => void;
-}
-
-// App-wide types should be in dedicated @/types files
-```
-
-**4. Public API - Be Intentional**
-
-```typescript
-/* ==========================================================================*/
-// Public API
-/* ==========================================================================*/
-
-// Don't re-export everything - be intentional about what's public
-export { createUser, getUserById }; // Only these are part of public API
-export type { CreateUserRequest }; // Only export types others need
-
-// Keep internal - don't export helpers, utilities, or implementation details
-// validateEmail, formatUserData, etc. stay private to this module
-```
-
-## Error Handling - Fail Fast & Simple
-
-**Core Principles:**
-
-1. **Validate only uncertain inputs** - API responses, user input, external data
-2. **Don't re-validate TypeScript-guaranteed values** - Trust your types
-3. **Catch only what you can handle** - Let other exceptions bubble up
-4. **One try/catch per function max** - If you need more, refactor
-5. **Structured logging with context** - Preserve error causes and original stack traces
-6. **Consider Result types for predictable failures** - Reserve exceptions for truly exceptional cases
-
-```typescript
-// Custom error class that preserves cause
-class AppError extends Error {
-  constructor(message: string, options?: { cause?: Error; userId?: string; context?: Record<string, unknown> }) {
-    super(message, { cause: options?.cause });
-    this.name = "AppError";
-  }
-}
-
-// Result type for predictable failures in hot paths
-type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
-
-async function processPayment(paymentData: unknown, userId: string): Promise<PaymentResult> {
-  // Step 1: Validate uncertain input ----
-  const validatedData = PaymentRequestSchema.parse(paymentData);
-
-  if (!userId.trim()) {
-    throw new Error("User ID cannot be empty");
-  }
-
-  // Step 2: Process payment ----
-  try {
-    const result = await paymentGateway.charge(validatedData);
-    await updateUserBalance(userId, -validatedData.amount);
-    return { success: true, transactionId: result.id };
-  } catch (err) {
-    // Structured logging with context
-    logger.error({ userId, amount: validatedData.amount, err }, "Payment failed");
-    // Preserve original error cause
-    throw new AppError("Payment processing failed", { cause: err, userId });
-  }
-}
-
-// Result type for predictable failures
-async function fetchUserSafely(userId: string): Promise<Result<User>> {
-  if (!userId.trim()) {
-    return { success: false, error: new Error("User ID cannot be empty") };
-  }
-
-  try {
-    const user = await getUserById(userId);
-    return { success: true, data: user };
-  } catch (err) {
-    logger.warn({ userId, err }, "User fetch failed");
-    return { success: false, error: err as Error };
-  }
-}
-
-function validateUserRegistration(data: unknown): CreateUserRequest {
-  try {
-    return UserCreateRequestSchema.parse(data);
-  } catch (err) {
-    // Structured logging
-    logger.warning({ data, err }, "Invalid registration data");
-    // Preserve cause in re-thrown error
-    throw new AppError("Registration validation failed", { cause: err });
-  }
-}
-```
-
-## Function-First Design
-
-**Favor functions over classes:**
-
-```typescript
-// Step 1: Validate input ----
-async function createUser(userData: unknown): Promise<User> {
-  const validatedData = UserCreateRequestSchema.parse(userData);
-
-  const existingUser = await getUserByEmail(validatedData.email);
-  if (existingUser) {
-    throw new Error(`User with email ${validatedData.email} already exists`);
-  }
-
-  // Step 2: Create user record ----
-  const user: User = {
-    id: generateId(),
-    email: validatedData.email,
-    name: validatedData.name,
-    createdAt: new Date(),
-    isActive: true,
-  };
-
-  // Step 3: Save to database ----
-  await saveUser(user);
-  return user;
-}
-
-async function getUserById(userId: string): Promise<User | null> {
-  if (!userId.trim()) {
-    throw new Error("User ID cannot be empty");
-  }
-
-  return await db.findById(userId);
-}
-```
-
-## React Component Patterns
-
-**Simple functional components with proper prop destructuring:**
-
-```tsx
-interface UserCardProps {
-  user: User;
-  isSelected?: boolean;
-  onSelect?: (userId: string) => void;
-}
-
-function UserCard({ user, isSelected = false, onSelect }: UserCardProps) {
-  if (!user) return null;
-
-  return (
-    <div>
-      <h3>{user.name}</h3>
-      <p>{user.email}</p>
-      {onSelect && <button onClick={() => onSelect(user.id)}>{isSelected ? "Selected" : "Select"}</button>}
-    </div>
-  );
-}
-
-function UserProfile({ userId, editable = false }: UserProfileProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!userId) {
-      setError("User ID is required");
-      setIsLoading(false);
-      return;
-    }
-
-    loadUser();
-  }, [userId]);
-
-  const loadUser = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const userData = await getUserById(userId);
-      if (!userData) {
-        throw new Error("User not found");
-      }
-
-      setUser(userData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!user) return <div>User not found</div>;
-
-  return (
-    <div>
-      <h2>{user.name}</h2>
-      <p>{user.email}</p>
-      {editable && <button onClick={() => console.log("Edit user")}>Edit</button>}
-    </div>
-  );
-}
-```
-
-## Custom Hooks
-
-**Simple, focused custom hooks:**
-
-```tsx
-function useUser(userId: string) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!userId) {
-      setError("User ID is required");
-      setIsLoading(false);
-      return;
-    }
-
-    const loadUser = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const userData = await getUserById(userId);
-        setUser(userData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadUser();
-  }, [userId]);
-
-  return { user, isLoading, error };
-}
-```
-
-## Performance - React 19 Handles Most
-
-**React 19 automatically optimizes most cases - be selective with manual optimization:**
-
-```tsx
-// React 19 handles this automatically - no useMemo needed
-function UserList({ users, searchTerm }: UserListProps) {
-  const filteredUsers = users.filter((user) => user.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-  const handleEdit = (user: User) => {
-    editUser(user);
-  };
-
-  return (
-    <div>
-      {filteredUsers.map((user) => (
-        <UserCard key={user.id} user={user} onEdit={handleEdit} />
-      ))}
-    </div>
-  );
-}
-
-// Only optimize when you measure actual performance problems
-function ExpensiveComponent({ data }: ExpensiveProps) {
-  // Only use useMemo if you have proven performance issues
-  const expensiveResult = useMemo(() => {
-    return reallyExpensiveOperation(data);
-  }, [data]);
-
-  return <div>{expensiveResult}</div>;
-}
-```
-
-## Async Patterns
-
-**Simple concurrent operations:**
-
-```typescript
-async function fetchUserDashboard(userId: string): Promise<UserDashboard> {
-  if (!userId.trim()) {
-    throw new Error("User ID is required");
-  }
-
-  const [user, projects, notifications] = await Promise.all([getUserById(userId), getUserProjects(userId), getUserNotifications(userId)]);
-
-  return { user, projects, notifications };
-}
-```
-
-## Resource Management
-
-**Clean up resources properly:**
-
-```tsx
-function UserNotifications({ userId }: UserNotificationsProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    const controller = new AbortController();
-
-    const loadNotifications = async () => {
-      try {
-        const data = await fetchNotifications(userId, {
-          signal: controller.signal,
-        });
-        setNotifications(data);
-      } catch (error) {
-        if (error.name !== "AbortError") {
-          console.error("Failed to load notifications:", error);
-        }
-      }
-    };
-
-    loadNotifications();
-
-    return () => {
-      controller.abort();
-    };
-  }, [userId]);
-
-  return (
-    <div>
-      {notifications.map((notification) => (
-        <div key={notification.id}>{notification.message}</div>
-      ))}
-    </div>
-  );
-}
-```
-
-## Type Organization & Export Strategy
-
-**Be intentional about what you export - don't re-export everything:**
-
-```typescript
-// users/types.ts - Dedicated types file for app-wide types
-export interface User {
+interface User {
   id: string;
   email: string;
   name: string;
@@ -445,80 +95,582 @@ export interface User {
   isActive: boolean;
 }
 
-export interface CreateUserRequest {
+interface CreateUserRequest {
   email: string;
   name: string;
   password: string;
 }
 
-// users/service.ts - Implementation file
-/* ==========================================================================*/
-// Types (Component-specific only)
-/* ==========================================================================*/
-
-// Only hyper-specific types that won't be used elsewhere
-interface ProcessingOptions {
-  validateEmail: boolean;
-  sendWelcomeEmail: boolean;
+interface UserServiceConfig {
+  databaseUrl: string;
+  maxRetries: number;
+  timeoutMs: number;
 }
 
-/* ==========================================================================*/
-// Public API - Be Intentional
-/* ==========================================================================*/
-
-// Only export what other modules actually need
-export { createUser, getUserById };
-export type { CreateUserRequest };
-
-// Keep these internal - don't export helpers or implementation details:
-// - validateUserData (helper function)
-// - ProcessingOptions (internal type)
-// - formatUserResponse (utility function)
-```
-
-**Component files - keep prop interfaces local:**
-
-```tsx
-// UserProfile.tsx
-import { User } from "@/types/user";
-
-// Hyper-specific to this component - keep local
+// Component Props
 interface UserProfileProps {
-  user: User;
-  isEditable?: boolean;
-  onSave?: (user: User) => void;
+  userId: string;
+  editable?: boolean;
+  onUpdate?: (user: User) => void;
+  className?: string;
 }
 
-function UserProfile({ user, isEditable = false, onSave }: UserProfileProps) {
-  // Implementation
+interface UserProfileState {
+  user: User | null;
+  isEditing: boolean;
+  isLoading: boolean;
+  error: string | null;
 }
-
-// Only export the component - prop interface stays private
-export { UserProfile };
 ```
 
-**Index files - intentional barrel exports only:**
+## 4. Public API Declaration
+
+**Group exports at the bottom for clarity:**
 
 ```typescript
-// users/index.ts - Clean public API only
-export { createUser, getUserById, deleteUser } from "./service";
-export { UserProfile, UserCard } from "./components";
-export type { User, CreateUserRequest } from "./types";
+/* ==========================================================================*/
+// Implementation
+/* ==========================================================================*/
 
-// Don't export:
-// - Helper functions from service
-// - Internal component props
-// - Utility functions
-// - Implementation details
+function createUserAccount(userData: CreateUserRequest): Promise<User> {
+  // Implementation here
+}
+
+function fetchUserById(userId: string): Promise<User | null> {
+  // Implementation here
+}
+
+function validateUserEmail(email: string): boolean {
+  // Implementation here
+}
+
+/* ==========================================================================*/
+// Public API
+/* ==========================================================================*/
+export {
+  createUserAccount,
+  fetchUserById,
+  validateUserEmail,
+  type User,
+  type CreateUserRequest,
+};
+```
+
+```tsx
+/* ==========================================================================*/
+// Component Implementation
+/* ==========================================================================*/
+
+function UserProfile({ userId, editable = false, onUpdate, className }: UserProfileProps) {
+  // Component implementation
+}
+
+function UserAvatar({ user, size = "medium" }: UserAvatarProps) {
+  // Component implementation
+}
+
+/* ==========================================================================*/
+// Component Exports
+/* ==========================================================================*/
+export { UserProfile, UserAvatar };
+export type { UserProfileProps, UserAvatarProps };
+```
+
+## 5. Function Design & Documentation
+
+**Always use proper TypeScript typing and clear documentation:**
+
+```typescript
+/**
+ * Fetch user profile with optional settings inclusion.
+ */
+async function fetchUserProfile(
+  userId: string, 
+  includeSettings: boolean = false
+): Promise<UserProfile | null> {
+  // 1️⃣ Validate input -----------------
+  if (!userId?.trim()) {
+    throw new Error("User ID cannot be empty");
+  }
+
+  // 2️⃣ Query database -----------------
+  const profile = await db.query("SELECT * FROM user_profiles WHERE user_id = ?", [userId]);
+  
+  if (!profile) {
+    return null;
+  }
+
+  // 3️⃣ Include settings if requested -----------------
+  if (includeSettings) {
+    profile.settings = await fetchUserSettings(userId);
+  }
+
+  return profile;
+}
+
+/**
+ * Validate email format and domain restrictions.
+ */
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && !email.includes("+");
+}
+
+/**
+ * User service class with singleton pattern for database connections.
+ */
+class UserService {
+  private static instance: UserService | null = null;
+  private db: DatabaseConnection;
+
+  private constructor(config: UserServiceConfig) {
+    this.db = new DatabaseConnection(config.databaseUrl);
+  }
+
+  static getInstance(config: UserServiceConfig): UserService {
+    if (!UserService.instance) {
+      UserService.instance = new UserService(config);
+    }
+    return UserService.instance;
+  }
+
+  async createUser(userData: CreateUserRequest): Promise<User> {
+    // 1️⃣ Validate input data -----------------
+    if (!this.validateUserData(userData)) {
+      throw new ValidationError("Invalid user data provided");
+    }
+
+    // 2️⃣ Check for existing user -----------------
+    const existingUser = await this.findUserByEmail(userData.email);
+    if (existingUser) {
+      throw new Error(`User with email ${userData.email} already exists`);
+    }
+
+    // 3️⃣ Create user record -----------------
+    const user: User = {
+      id: generateId(),
+      email: userData.email.toLowerCase(),
+      name: userData.name.trim(),
+      createdAt: new Date(),
+      isActive: true,
+    };
+
+    // 4️⃣ Save to database -----------------
+    await this.db.insert("users", user);
+
+    return user;
+  }
+}
+```
+
+## 6. Error Handling Patterns
+
+**FAIL FAST - Check for errors immediately and throw with descriptive messages:**
+
+```typescript
+async function processPayment(amount: number, userId: string): Promise<PaymentResult> {
+  // FAIL FAST: Validate all inputs immediately
+  if (amount <= 0) {
+    throw new Error(`Payment amount must be positive, got: ${amount}`);
+  }
+
+  if (amount > 10000) {
+    throw new Error(`Payment amount exceeds limit: ${amount}`);
+  }
+
+  if (!userId?.trim()) {
+    throw new Error("User ID cannot be empty");
+  }
+
+  try {
+    // 1️⃣ Validate user exists - FAIL FAST -----------------
+    const user = await getUserById(userId);
+    if (!user) {
+      throw new Error(`User ${userId} not found`);
+    }
+
+    if (!user.isActive) {
+      throw new Error(`User ${userId} is not active`);
+    }
+
+    // 2️⃣ Check payment method - FAIL FAST -----------------
+    if (!user.paymentMethod) {
+      throw new Error(`User ${userId} has no payment method configured`);
+    }
+
+    // 3️⃣ Process payment -----------------
+    const result = await paymentGateway.charge(amount, user.paymentMethod);
+
+    // 4️⃣ Update user balance -----------------
+    await updateUserBalance(userId, -amount);
+
+    return { success: true, transactionId: result.id };
+
+  } catch (error) {
+    logger.error(`Payment failed for user ${userId}:`, error);
+    throw new Error(`Payment processing failed: ${error.message}`);
+  }
+}
+
+function validateFileUpload(file: File): void {
+  // FAIL FAST: Multiple early checks
+  if (!file) {
+    throw new Error("File is required");
+  }
+
+  if (file.size === 0) {
+    throw new Error("File cannot be empty");
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`File size ${file.size} exceeds limit ${MAX_FILE_SIZE}`);
+  }
+
+  const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error(`File type ${file.type} not allowed`);
+  }
+}
+```
+
+## 7. React Component Patterns
+
+**Keep components focused and well-structured:**
+
+```tsx
+/* ==========================================================================*/
+// Component State & Hooks
+/* ==========================================================================*/
+
+function UserProfile({ userId, editable = false, onUpdate, className }: UserProfileProps) {
+  const [state, setState] = useState<UserProfileState>({
+    user: null,
+    isEditing: false,
+    isLoading: true,
+    error: null,
+  });
+
+  // 1️⃣ Load user data on mount -----------------
+  useEffect(() => {
+    if (!userId) {
+      setState(prev => ({ ...prev, error: "User ID is required", isLoading: false }));
+      return;
+    }
+
+    loadUserData();
+  }, [userId]);
+
+  const loadUserData = useCallback(async () => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      
+      const user = await fetchUserById(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      setState(prev => ({ ...prev, user, isLoading: false }));
+    } catch (error) {
+      setState(prev => ({ 
+        ...prev, 
+        error: error.message, 
+        isLoading: false 
+      }));
+    }
+  }, [userId]);
+
+  // 2️⃣ Handle edit mode toggle -----------------
+  const handleEditToggle = useCallback(() => {
+    setState(prev => ({ ...prev, isEditing: !prev.isEditing }));
+  }, []);
+
+  // 3️⃣ Handle user updates -----------------
+  const handleUserUpdate = useCallback(async (updatedUser: User) => {
+    try {
+      await updateUser(updatedUser);
+      setState(prev => ({ ...prev, user: updatedUser, isEditing: false }));
+      onUpdate?.(updatedUser);
+    } catch (error) {
+      setState(prev => ({ ...prev, error: error.message }));
+    }
+  }, [onUpdate]);
+
+  // 4️⃣ Early returns for loading/error states -----------------
+  if (state.isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (state.error) {
+    return <ErrorMessage message={state.error} onRetry={loadUserData} />;
+  }
+
+  if (!state.user) {
+    return <EmptyState message="User not found" />;
+  }
+
+  /* ==========================================================================*/
+  // Render
+  /* ==========================================================================*/
+  
+  return (
+    <div className={clsx(styles.userProfile, className)}>
+      {/* Header Section ------------------------------------------ */}
+      <div className={styles.header}>
+        <UserAvatar user={state.user} size="large" />
+        <div className={styles.userInfo}>
+          <h2 className={styles.userName}>{state.user.name}</h2>
+          <p className={styles.userEmail}>{state.user.email}</p>
+        </div>
+        {editable && (
+          <Button onClick={handleEditToggle} variant="outline">
+            {state.isEditing ? "Cancel" : "Edit"}
+          </Button>
+        )}
+      </div>
+
+      {/* Content Section ----------------------------------------- */}
+      <div className={styles.content}>
+        {state.isEditing ? (
+          <UserEditForm 
+            user={state.user} 
+            onSave={handleUserUpdate}
+            onCancel={handleEditToggle}
+          />
+        ) : (
+          <UserDisplayInfo user={state.user} />
+        )}
+      </div>
+      {/* End Content --------------------------------------------- */}
+    </div>
+  );
+}
+```
+
+## 8. Custom Hooks Patterns
+
+**Create reusable, focused custom hooks:**
+
+```tsx
+/* ==========================================================================*/
+// Custom Hooks
+/* ==========================================================================*/
+
+interface UseUserDataReturn {
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
+
+function useUserData(userId: string): UseUserDataReturn {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchUser = useCallback(async () => {
+    if (!userId) {
+      setError("User ID is required");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const userData = await fetchUserById(userId);
+      setUser(userData);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  return { user, isLoading, error, refetch: fetchUser };
+}
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+```
+
+## 9. Async Patterns & Performance
+
+**Use efficient TypeScript and React patterns:**
+
+```typescript
+/* ==========================================================================*/
+// Async Operations
+/* ==========================================================================*/
+
+// Concurrent data fetching
+async function fetchUserDashboard(userId: string): Promise<UserDashboard> {
+  // 1️⃣ Validate input -----------------
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  // 2️⃣ Fetch data concurrently -----------------
+  const [user, projects, notifications] = await Promise.all([
+    fetchUserById(userId),
+    fetchUserProjects(userId),
+    fetchUserNotifications(userId),
+  ]);
+
+  // 3️⃣ Combine results -----------------
+  return {
+    user,
+    projects,
+    notifications,
+    lastUpdated: new Date(),
+  };
+}
+
+// Stream processing with generators
+async function* processUserBatch(userIds: string[]): AsyncGenerator<ProcessedUser> {
+  for (const userId of userIds) {
+    try {
+      const user = await fetchUserById(userId);
+      if (user) {
+        const processed = await processUser(user);
+        yield processed;
+      }
+    } catch (error) {
+      console.error(`Failed to process user ${userId}:`, error);
+    }
+  }
+}
+```
+
+```tsx
+/* ==========================================================================*/
+// React Performance Patterns
+/* ==========================================================================*/
+
+// Memoized components
+const UserCard = React.memo(function UserCard({ user, onEdit }: UserCardProps) {
+  return (
+    <div className={styles.userCard}>
+      <h3>{user.name}</h3>
+      <p>{user.email}</p>
+      <Button onClick={() => onEdit(user)}>Edit</Button>
+    </div>
+  );
+});
+
+// Memoized expensive calculations
+function UserList({ users, searchTerm }: UserListProps) {
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm) return users;
+    
+    return users.filter(user => 
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [users, searchTerm]);
+
+  const handleUserEdit = useCallback((user: User) => {
+    // Handle edit logic
+  }, []);
+
+  return (
+    <div className={styles.userList}>
+      {filteredUsers.map(user => (
+        <UserCard 
+          key={user.id} 
+          user={user} 
+          onEdit={handleUserEdit}
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+## 10. Testing Patterns
+
+**Write clear, focused tests:**
+
+```typescript
+/* ==========================================================================*/
+// Test Utilities
+/* ==========================================================================*/
+
+describe("UserService", () => {
+  describe("createUser", () => {
+    it("should create user with valid data", async () => {
+      // Arrange
+      const userData: CreateUserRequest = {
+        email: "test@example.com",
+        name: "Test User",
+        password: "securePassword123",
+      };
+
+      // Act
+      const user = await userService.createUser(userData);
+
+      // Assert
+      expect(user.email).toBe("test@example.com");
+      expect(user.name).toBe("Test User");
+      expect(user.id).toBeDefined();
+      expect(user.createdAt).toBeInstanceOf(Date);
+    });
+
+    it("should fail with duplicate email", async () => {
+      // Arrange
+      const existingEmail = "existing@example.com";
+      await createTestUser({ email: existingEmail });
+
+      const userData: CreateUserRequest = {
+        email: existingEmail,
+        name: "New User",
+        password: "password123",
+      };
+
+      // Act & Assert
+      await expect(userService.createUser(userData))
+        .rejects
+        .toThrow("User with email existing@example.com already exists");
+    });
+  });
+});
 ```
 
 ---
 
-**Remember**:
+**Remember**: Always prioritize readability, consistency, and maintainability in your TypeScript and React code.
 
-- **Function-first design** - Avoid classes unless truly needed
-- **Zod for uncertain input validation** - Trust TypeScript for internal types
-- **React 19 handles most optimizations** - Only optimize when you measure problems
-- **Fail fast on uncertain inputs** - Don't over-validate guaranteed values
-- **Be intentional about exports** - Don't re-export everything, keep implementation details private
-- **Dedicated types files** - Component prop interfaces stay local, shared types go in dedicated files
+---
+
+# TypeScript & TSX Development Tools
+
+**Use pnpm, not npm** - Always use pnpm for package management in TypeScript/TSX projects.
+
+## Package Management
+
+```bash
+# Use pnpm for all package operations
+pnpm install
+pnpm add package-name
+pnpm remove package-name
+pnpm run script-name
+```
+
+**Never use npm commands - always use pnpm instead.**
