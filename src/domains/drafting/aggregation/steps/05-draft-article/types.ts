@@ -4,8 +4,7 @@
 // Purpose: Type definitions for drafting the aggregated article
 /* ==========================================================================*/
 
-import type { StepRequest, StepResponse } from "@/core/types/step";
-import type { SourceFactsResult, SourceFactsConditionalResult } from "../../types";
+import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/runner";
 
 /* ==========================================================================*/
 // Context & Output Types
@@ -16,9 +15,15 @@ import type { SourceFactsResult, SourceFactsConditionalResult } from "../../type
  */
 interface DraftArticleContext {
   /** Facts extracted from each source from step 01 */
-  extractedFactsResults: SourceFactsResult[];
+  extractedFactsResults: Array<{
+    sourceNumber: number;
+    extractedFacts: string;
+  }>;
   /** Conditionally processed facts from each source from step 02 */
-  extractedFactsConditionalResults: SourceFactsConditionalResult[];
+  extractedFactsConditionalResults: Array<{
+    sourceNumber: number;
+    factsBitSplitting2: string;
+  }>;
   /** Generated headlines from step 03 */
   generatedHeadlines: string;
   /** Generated content blobs from step 03 */
