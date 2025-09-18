@@ -12,8 +12,8 @@
 // Internal Modules ----
 import { inngest } from "@/core/inngest/client";
 import { extractFacts } from "./steps/01-extract-facts";
+import { extractFactsConditional } from "./steps/02-extract-facts-conditional";
 // TODO: Import remaining steps when implemented
-// import { extractFactsConditional } from "./steps/02-extract-facts-conditional";
 // import { generateHeadlines } from "./steps/03-generate-headlines";
 // import { createOutline } from "./steps/04-create-outline";
 // import { draftArticle } from "./steps/05-draft-article";
@@ -34,6 +34,12 @@ import type { LLMTokenUsage } from "@/core/usage/types";
 interface SourceFactsResult {
   sourceNumber: number;
   extractedFacts: string;
+  usage: LLMTokenUsage[];
+}
+
+interface SourceFactsConditionalResult {
+  sourceNumber: number;
+  factsBitSplitting2: string;
   usage: LLMTokenUsage[];
 }
 
@@ -141,18 +147,47 @@ export default inngest.createFunction(
       return await updateArticleStatus(articleId, "10%");
     });
 
-    // TODO: Step 02 - Extract facts conditional (parallel processing)
-    // stepName = "02-extract-facts-conditional";
-    // const extractedFactsConditional = await step.run(stepName, async () => {
-    //   // Similar parallel processing for conditional fact extraction
-    //   // Only processes primary sources for second-half content
-    //   // Returns structured results maintaining source relationship
-    // });
+    // 6️⃣ Extract facts conditional from all sources in parallel -----
+    stepName = "02-extract-facts-conditional";
+    const extractedFactsConditional = await step.run(stepName, async () => {
+      // 1️⃣ Create parallel step execution for each source -----
+      const parallelConditionalExtractions = pipelineRequest.sources.map((source: Source, index: number) => 
+        step.run(`extract-facts-conditional-source-${source.number}`, async () => {
+          // Build single-source request with step 01 results as context
+          const singleSourceRequest = {
+            ...baseStepRequest,
+            sources: [source], // Single source per parallel execution
+            context: {
+              extractedFactsResults: extractedFactsResults.extractedFactsResults as SourceFactsResult[],
+            },
+          };
+          
+          const result = await extractFactsConditional(singleSourceRequest, getStepConfig(stepName));
+          
+          return {
+            sourceNumber: source.number,
+            factsBitSplitting2: result.output.factsBitSplitting2,
+            usage: result.usage,
+          } as SourceFactsConditionalResult;
+        })
+      );
 
-    // TODO: Update status after step 2
-    // await step.run("update-status-20", async () => {
-    //   return await updateArticleStatus(articleId, "20%");
-    // });
+      // 2️⃣ Wait for all parallel conditional extractions to complete -----
+      const results = await Promise.all(parallelConditionalExtractions);
+      
+      // 3️⃣ Aggregate usage data -----
+      const totalUsage = results.flatMap((result: SourceFactsConditionalResult) => result.usage);
+      
+      return {
+        extractedFactsConditionalResults: results,
+        totalUsage,
+      };
+    });
+
+    // Update status after step 2
+    await step.run("update-status-20", async () => {
+      return await updateArticleStatus(articleId, "20%");
+    });
 
     // TODO: Step 03 - Generate headlines (sequential, uses all source results)
     // stepName = "03-generate-headlines";
@@ -302,7 +337,7 @@ export default inngest.createFunction(
       pipelineRequest,
       run,
       extractedFactsResults: extractedFactsResults.extractedFactsResults,
-      // extractedFactsConditional,
+      extractedFactsConditional: extractedFactsConditional.extractedFactsConditionalResults,
       // generatedHeadlines,
       // createdOutline,
       // draftedArticle,
