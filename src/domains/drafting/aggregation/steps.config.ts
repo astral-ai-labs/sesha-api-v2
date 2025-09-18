@@ -12,7 +12,7 @@ import { DEFAULT_CLAUDE_MODEL as DEFAULT_MODEL, DEFAULT_OPENAI_MODEL as DEFAULT_
 // Types
 /* ==========================================================================*/
 
-export type stepName = "01-extract-facts" | "02-extract-facts-conditional" | "03-generate-headlines" | "04-create-outline" | "05-draft-outline" | "06-revise-article" | "07-source-attribution" | "08-apply-color-coding";
+export type stepName = "01-extract-facts" | "02-extract-facts-conditional" | "03-generate-headlines" | "04-create-outline" | "05-draft-article" | "06-revise-article" | "07-source-attribution" | "08-apply-color-coding";
 
 interface HeadlineStepConfig extends StepConfig {
   structuredModel: string;
@@ -52,10 +52,10 @@ export const STEP_CONFIGS: Record<stepName, StepConfigVariant> = {
     maxTokens: 3000,
   },
 
-  "05-draft-outline": {
+  "05-draft-article": {
     model: DEFAULT_MODEL,
-    temperature: 0.7,
-    maxTokens: 3000,
+    temperature: 0.4,
+    maxTokens: 4000,
   },
 
   "06-revise-article": {
