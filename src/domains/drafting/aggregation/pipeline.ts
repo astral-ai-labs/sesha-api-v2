@@ -18,8 +18,7 @@ import { createOutline } from "./steps/04-create-outline";
 import { draftArticle } from "./steps/05-draft-article";
 import { reviseArticle } from "./steps/06-revise-article";
 import { addSourceAttribution } from "./steps/07-source-attribution";
-// TODO: Import remaining steps when implemented
-// import { applyColorCoding } from "./steps/08-apply-color-coding";
+import { applyColorCoding } from "./steps/08-apply-color-coding";
 import { getStepConfig, stepName } from "./steps.config";
 import { getArticleAsPipelineRequest, createRunSkeleton, updateArticleStatus, updateRun } from "../common/operations";
 
@@ -287,50 +286,50 @@ export default inngest.createFunction(
       return await updateArticleStatus(articleId, "90%");
     });
 
-    // TODO: Step 08 - Apply color coding (sequential, final step)
-    // stepName = "08-apply-color-coding";
-    // const colorCodedArticle = await step.run(stepName, async () => {
-    //   const request = {
-    //     ...baseStepRequest,
-    //     sources: pipelineRequest.sources,
-    //     context: {
-    //       attributedArticle: attributedArticle.output.attributedArticle,
-    //     },
-    //   };
-    //   return await applyColorCoding(request, getStepConfig(stepName));
-    // });
+    // 1️⃣2️⃣ Apply color coding (sequential, final step) -----
+    stepName = "08-apply-color-coding";
+    const colorCodedArticle = await step.run(stepName, async () => {
+      const request = {
+        ...baseStepRequest,
+        sources: pipelineRequest.sources,
+        context: {
+          attributedArticle: attributedArticle.output.attributedArticle,
+        },
+      };
+      return await applyColorCoding(request, getStepConfig(stepName));
+    });
 
-    // TODO: Final status update to completed
-    // await step.run("update-status-completed", async () => {
-    //   return await updateArticleStatus(articleId, "completed");
-    // });
+    // Final status update to completed
+    await step.run("update-status-completed", async () => {
+      return await updateArticleStatus(articleId, "completed");
+    });
 
-    // TODO: Finalize run with aggregated usage data
-    // await step.run("finalize-run", async () => {
-    //   // 1️⃣ Aggregate all token usage from all steps -----
-    //   const allUsage = [
-    //     ...extractedFactsResults.totalUsage,
-    //     ...extractedFactsConditional.totalUsage,
-    //     ...generatedHeadlines.usage,
-    //     ...createdOutline.usage,
-    //     ...draftedArticle.usage,
-    //     // ...revisedArticle.usage,
-    //     // ...attributedArticle.usage,
-    //     // ...colorCodedArticle.usage,
-    //   ];
+    // Finalize run with aggregated usage data
+    await step.run("finalize-run", async () => {
+      // 1️⃣ Aggregate all token usage from all steps -----
+      const allUsage = [
+        ...extractedFactsResults.totalUsage,
+        ...extractedFactsConditional.totalUsage,
+        ...generatedHeadlines.usage,
+        ...createdOutline.usage,
+        ...draftedArticle.usage,
+        ...revisedArticle.usage,
+        ...attributedArticle.usage,
+        ...colorCodedArticle.usage,
+      ];
 
-    //   const totalInputTokens = allUsage.reduce((sum, usage) => sum + usage.inputTokens, 0);
-    //   const totalOutputTokens = allUsage.reduce((sum, usage) => sum + usage.outputTokens, 0);
+      const totalInputTokens = allUsage.reduce((sum, usage) => sum + usage.inputTokens, 0);
+      const totalOutputTokens = allUsage.reduce((sum, usage) => sum + usage.outputTokens, 0);
 
-    //   // 2️⃣ Update run with final usage data -----
-    //   return await updateRun({
-    //     id: run.id,
-    //     inputTokens: totalInputTokens,
-    //     outputTokens: totalOutputTokens,
-    //     // TODO: Calculate cost based on model usage and pricing
-    //     costUsd: "0.00", // Placeholder for cost calculation
-    //   });
-    // });
+      // 2️⃣ Update run with final usage data -----
+      return await updateRun({
+        id: run.id,
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+        // TODO: Calculate cost based on model usage and pricing
+        costUsd: "0.00", // Placeholder for cost calculation
+      });
+    });
 
     return {
       pipelineRequest,
@@ -342,8 +341,7 @@ export default inngest.createFunction(
       draftedArticle,
       revisedArticle,
       attributedArticle,
-      // TODO: Add remaining steps when implemented
-      // colorCodedArticle,
+      colorCodedArticle,
     };
   }
 );
