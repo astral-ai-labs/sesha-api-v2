@@ -15,8 +15,8 @@ import { extractFacts } from "./steps/01-extract-facts";
 import { extractFactsConditional } from "./steps/02-extract-facts-conditional";
 import { generateHeadlines } from "./steps/03-generate-headlines";
 import { createOutline } from "./steps/04-create-outline";
+import { draftArticle } from "./steps/05-draft-article";
 // TODO: Import remaining steps when implemented
-// import { draftArticle } from "./steps/05-draft-article";
 // import { reviseArticle } from "./steps/06-revise-article";
 // import { addSourceAttribution } from "./steps/07-source-attribution";
 // import { applyColorCoding } from "./steps/08-apply-color-coding";
@@ -229,27 +229,27 @@ export default inngest.createFunction(
       return await updateArticleStatus(articleId, "40%");
     });
 
-    // TODO: Step 05 - Draft article (sequential)
-    // stepName = "05-draft-article";
-    // const draftedArticle = await step.run(stepName, async () => {
-    //   const request = {
-    //     ...baseStepRequest,
-    //     sources: pipelineRequest.sources,
-    //     context: {
-    //       extractedFactsResults: extractedFactsResults.extractedFactsResults,
-    //       extractedFactsConditionalResults: extractedFactsConditional.extractedFactsConditionalResults,
-    //       generatedHeadline: generatedHeadlines.output.generatedHeadline,
-    //       generatedBlobs: generatedHeadlines.output.generatedBlobs,
-    //       createdOutline: createdOutline.output.createdOutline,
-    //     },
-    //   };
-    //   return await draftArticle(request, getStepConfig(stepName));
-    // });
+    // 9️⃣ Draft article (sequential, uses all source results) -----
+    stepName = "05-draft-article";
+    const draftedArticle = await step.run(stepName, async () => {
+      const request = {
+        ...baseStepRequest,
+        sources: pipelineRequest.sources,
+        context: {
+          extractedFactsResults: extractedFactsResults.extractedFactsResults as SourceFactsResult[],
+          extractedFactsConditionalResults: extractedFactsConditional.extractedFactsConditionalResults as SourceFactsConditionalResult[],
+          generatedHeadlines: generatedHeadlines.output.generatedHeadline,
+          generatedBlobs: generatedHeadlines.output.generatedBlobs,
+          createdOutline: createdOutline.output.createdOutline,
+        },
+      };
+      return await draftArticle(request, getStepConfig(stepName));
+    });
 
-    // TODO: Update status after step 5
-    // await step.run("update-status-70", async () => {
-    //   return await updateArticleStatus(articleId, "70%");
-    // });
+    // Update status after step 5
+    await step.run("update-status-70", async () => {
+      return await updateArticleStatus(articleId, "70%");
+    });
 
     // TODO: Step 06 - Revise article (sequential)
     // stepName = "06-revise-article";
@@ -314,9 +314,9 @@ export default inngest.createFunction(
     //     ...generatedHeadlines.usage,
     //     ...createdOutline.usage,
     //     ...draftedArticle.usage,
-    //     ...revisedArticle.usage,
-    //     ...attributedArticle.usage,
-    //     ...colorCodedArticle.usage,
+    //     // ...revisedArticle.usage,
+    //     // ...attributedArticle.usage,
+    //     // ...colorCodedArticle.usage,
     //   ];
 
     //   const totalInputTokens = allUsage.reduce((sum, usage) => sum + usage.inputTokens, 0);
@@ -340,7 +340,7 @@ export default inngest.createFunction(
       extractedFactsConditional: extractedFactsConditional.extractedFactsConditionalResults,
       generatedHeadlines,
       createdOutline,
-      // draftedArticle,
+      draftedArticle,
       // revisedArticle,
       // attributedArticle,
       // colorCodedArticle,
