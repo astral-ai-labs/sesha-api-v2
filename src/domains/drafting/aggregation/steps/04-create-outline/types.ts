@@ -5,6 +5,7 @@
 /* ==========================================================================*/
 
 import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/runner";
+import type { SourceFactsResult, SourceFactsConditionalResult } from "../02-extract-facts-conditional/types";
 
 /* ==========================================================================*/
 // Context & Output Types
@@ -15,15 +16,9 @@ import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/
  */
 interface CreateOutlineContext {
   /** Facts extracted from each source from step 01 */
-  extractedFactsResults: Array<{
-    sourceNumber: number;
-    extractedFacts: string;
-  }>;
+  extractedFactsResults: SourceFactsResult[];
   /** Conditionally processed facts from each source from step 02 */
-  extractedFactsConditionalResults: Array<{
-    sourceNumber: number;
-    factsBitSplitting2: string;
-  }>;
+  extractedFactsConditionalResults: SourceFactsConditionalResult[];
   /** Generated headline from step 03 */
   generatedHeadline: string;
   /** Generated content blobs from step 03 */

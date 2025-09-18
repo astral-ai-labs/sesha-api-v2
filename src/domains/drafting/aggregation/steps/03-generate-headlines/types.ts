@@ -6,29 +6,7 @@
 
 // Internal Modules ----
 import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/runner";
-import type { LLMTokenUsage } from "@/core/usage/types";
-
-/* ==========================================================================*/
-// Types & Interfaces
-/* ==========================================================================*/
-
-/**
- * Result from step 01 extract facts for a single source.
- */
-interface SourceFactsResult {
-  sourceNumber: number;
-  extractedFacts: string;
-  usage: LLMTokenUsage[];
-}
-
-/**
- * Result from step 02 conditional processing for a single source.
- */
-interface SourceFactsConditionalResult {
-  sourceNumber: number;
-  factsBitSplitting2: string;
-  usage: LLMTokenUsage[];
-}
+import type { SourceFactsResult, SourceFactsConditionalResult } from "../02-extract-facts-conditional/types";
 
 /* ==========================================================================*/
 // Context & Output Types
@@ -60,4 +38,3 @@ interface GenerateHeadlinesOutput {
 
 export type GenerateHeadlinesRequest = StepRequest<GenerateHeadlinesContext>;
 export type GenerateHeadlinesResponse = StepResponse<GenerateHeadlinesOutput>;
-export type { SourceFactsResult, SourceFactsConditionalResult };

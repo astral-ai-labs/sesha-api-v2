@@ -9,8 +9,10 @@
 // Imports
 /* ==========================================================================*/
 
-// Internal Modules ----
+// External Packages ----
 import { inngest } from "@/core/inngest/client";
+
+// Internal Modules ----
 import { extractFacts } from "./steps/01-extract-facts";
 import { extractFactsConditional } from "./steps/02-extract-facts-conditional";
 import { generateHeadlines } from "./steps/03-generate-headlines";
@@ -21,26 +23,8 @@ import { addSourceAttribution } from "./steps/07-source-attribution";
 import { applyColorCoding } from "./steps/08-apply-color-coding";
 import { getStepConfig, stepName } from "./steps.config";
 import { getArticleAsPipelineRequest, createRunSkeleton, updateArticleStatus, updateRun } from "../common/operations";
-
-/* ==========================================================================*/
-// Types & Interfaces
-/* ==========================================================================*/
-
-// Internal Modules ----
 import type { Source } from "../common/types/_primitives";
-import type { LLMTokenUsage } from "@/core/usage/types";
-
-interface SourceFactsResult {
-  sourceNumber: number;
-  extractedFacts: string;
-  usage: LLMTokenUsage[];
-}
-
-interface SourceFactsConditionalResult {
-  sourceNumber: number;
-  factsBitSplitting2: string;
-  usage: LLMTokenUsage[];
-}
+import type { SourceFactsResult, SourceFactsConditionalResult } from "./steps/02-extract-facts-conditional/types";
 
 /* ==========================================================================*/
 // Pipeline Implementation
