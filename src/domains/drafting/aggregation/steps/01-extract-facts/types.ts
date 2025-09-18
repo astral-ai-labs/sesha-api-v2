@@ -1,14 +1,16 @@
 /* ==========================================================================*/
 // types.ts — Step 01: Extract Facts Types
 /* ==========================================================================*/
-// Purpose: Type definitions for extracting facts from multiple sources in parallel
+// Purpose: Type definitions for extracting facts from single source content
+// Sections: Imports, Context & Output Types, Step Request & Response Types
 /* ==========================================================================*/
 
-// External Modules ----
-import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/runner";
+/* ==========================================================================*/
+// Imports
+/* ==========================================================================*/
 
 // Internal Modules ----
-import type { SourceFactsResult } from "../../../common/types";
+import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/runner";
 
 /* ==========================================================================*/
 // Context & Output Types
@@ -20,11 +22,11 @@ import type { SourceFactsResult } from "../../../common/types";
 interface ExtractFactsContext {}
 
 /**
- * Output from extracting facts from multiple sources via Promise.all.
+ * Output from extracting facts from source content.
  */
 interface ExtractFactsOutput {
-  /** Array of facts extracted from each source, maintaining source relationship */
-  extractedFactsResults: SourceFactsResult[];
+  /** Extracted and rewritten facts from the source material */
+  extractedFacts: string;
 }
 
 /* ==========================================================================*/
