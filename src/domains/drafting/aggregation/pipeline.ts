@@ -14,8 +14,8 @@ import { inngest } from "@/core/inngest/client";
 import { extractFacts } from "./steps/01-extract-facts";
 import { extractFactsConditional } from "./steps/02-extract-facts-conditional";
 import { generateHeadlines } from "./steps/03-generate-headlines";
+import { createOutline } from "./steps/04-create-outline";
 // TODO: Import remaining steps when implemented
-// import { createOutline } from "./steps/04-create-outline";
 // import { draftArticle } from "./steps/05-draft-article";
 // import { reviseArticle } from "./steps/06-revise-article";
 // import { addSourceAttribution } from "./steps/07-source-attribution";
@@ -208,26 +208,26 @@ export default inngest.createFunction(
       return await updateArticleStatus(articleId, "30%");
     });
 
-    // TODO: Step 04 - Create outline (sequential)
-    // stepName = "04-create-outline";
-    // const createdOutline = await step.run(stepName, async () => {
-    //   const request = {
-    //     ...baseStepRequest,
-    //     sources: pipelineRequest.sources,
-    //     context: {
-    //       extractedFactsResults: extractedFactsResults.extractedFactsResults,
-    //       extractedFactsConditionalResults: extractedFactsConditional.extractedFactsConditionalResults,
-    //       generatedHeadline: generatedHeadlines.output.generatedHeadline,
-    //       generatedBlobs: generatedHeadlines.output.generatedBlobs,
-    //     },
-    //   };
-    //   return await createOutline(request, getStepConfig(stepName));
-    // });
+    // 8️⃣ Create outline (sequential, uses all source results) -----
+    stepName = "04-create-outline";
+    const createdOutline = await step.run(stepName, async () => {
+      const request = {
+        ...baseStepRequest,
+        sources: pipelineRequest.sources,
+        context: {
+          extractedFactsResults: extractedFactsResults.extractedFactsResults as SourceFactsResult[],
+          extractedFactsConditionalResults: extractedFactsConditional.extractedFactsConditionalResults as SourceFactsConditionalResult[],
+          generatedHeadline: generatedHeadlines.output.generatedHeadline,
+          generatedBlobs: generatedHeadlines.output.generatedBlobs,
+        },
+      };
+      return await createOutline(request, getStepConfig(stepName));
+    });
 
-    // TODO: Update status after step 4
-    // await step.run("update-status-40", async () => {
-    //   return await updateArticleStatus(articleId, "40%");
-    // });
+    // Update status after step 4
+    await step.run("update-status-40", async () => {
+      return await updateArticleStatus(articleId, "40%");
+    });
 
     // TODO: Step 05 - Draft article (sequential)
     // stepName = "05-draft-article";
@@ -339,7 +339,7 @@ export default inngest.createFunction(
       extractedFactsResults: extractedFactsResults.extractedFactsResults,
       extractedFactsConditional: extractedFactsConditional.extractedFactsConditionalResults,
       generatedHeadlines,
-      // createdOutline,
+      createdOutline,
       // draftedArticle,
       // revisedArticle,
       // attributedArticle,
