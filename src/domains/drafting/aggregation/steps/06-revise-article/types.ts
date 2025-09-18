@@ -4,27 +4,16 @@
 // Purpose: Type definitions for revising the aggregated article
 /* ==========================================================================*/
 
-import type { StepRequest, StepResponse } from "@/core/types/step";
-import type { SourceFactsResult, SourceFactsConditionalResult } from "../../types";
+import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/runner";
 
 /* ==========================================================================*/
 // Context & Output Types
 /* ==========================================================================*/
 
 /**
- * Context for revise article step - includes draft plus all supporting materials.
+ * Context for revise article step - includes draft and source context for aggregation.
  */
 interface ReviseArticleContext {
-  /** Facts extracted from each source from step 01 */
-  extractedFactsResults: SourceFactsResult[];
-  /** Conditionally processed facts from each source from step 02 */
-  extractedFactsConditionalResults: SourceFactsConditionalResult[];
-  /** Generated headlines from step 03 */
-  generatedHeadlines: string;
-  /** Generated content blobs from step 03 */
-  generatedBlobs: string[];
-  /** Structured outline from step 04 */
-  createdOutline: string;
   /** Initial draft from step 05 */
   draftedArticle: string;
 }
