@@ -1,7 +1,7 @@
 /* ==========================================================================*/
 // types.ts — Step 03: Generate Headlines Types
 /* ==========================================================================*/
-// Purpose: Type definitions for generating headlines and content blobs from multiple sources
+// Purpose: Type definitions for generating headlines and content blobs from source(s)
 /* ==========================================================================*/
 
 // Internal Modules ----

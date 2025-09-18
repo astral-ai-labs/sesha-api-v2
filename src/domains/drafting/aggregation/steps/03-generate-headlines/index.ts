@@ -1,7 +1,7 @@
 /* ==========================================================================*/
 // index.ts — Generate headlines step execution
 /* ==========================================================================*/
-// Purpose: Generate punchy headline and engaging content blobs from multiple sources
+// Purpose: Generate punchy headline and engaging content blobs from source(s)
 // Sections: Imports, Schema, Implementation, Public API
 /* ==========================================================================*/
 
@@ -34,10 +34,10 @@ const HeadlineAndBlobsSchema = z.object({
 /* ==========================================================================*/
 
 /**
- * Generate punchy headline and engaging content blobs from multiple source facts.
+ * Generate punchy headline and engaging content blobs from source facts.
  */
 async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: StepConfig): Promise<GenerateHeadlinesResponse> {
-  // 1️⃣ Prepare template variables for multi-source aggregation ----
+  // 1️⃣ Prepare template variables for aggregation ----
   const userTemplateVariables = {
     input: {
       noOfBlobs: request.numberOfBlobs,

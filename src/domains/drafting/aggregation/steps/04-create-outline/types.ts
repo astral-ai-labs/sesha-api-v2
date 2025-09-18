@@ -1,7 +1,7 @@
 /* ==========================================================================*/
 // types.ts — Step 04: Create Outline Types
 /* ==========================================================================*/
-// Purpose: Type definitions for creating article outline from multiple sources
+// Purpose: Type definitions for creating article outline from source(s)
 /* ==========================================================================*/
 
 import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/runner";

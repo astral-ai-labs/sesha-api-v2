@@ -1,7 +1,7 @@
 /* ==========================================================================*/
 // pipeline.ts — Aggregation pipeline orchestration
 /* ==========================================================================*/
-// Purpose: Orchestrate the complete aggregation pipeline from multiple sources to draft
+// Purpose: Orchestrate the complete aggregation pipeline from source(s) to draft
 // Sections: Imports, Pipeline Implementation
 /* ==========================================================================*/
 
@@ -33,7 +33,7 @@ import type { SourceFactsResult, SourceFactsConditionalResult } from "./steps/02
 // RULES:
 // Formatting prompts does not get wrapped within a step. its deterministic.
 // The only stuff that gets wrapped within a step is the actual call to the AI, or if we need to do stuff like a DB call, other API call, stuff prone to failure.
-// Aggregation processes multiple sources in parallel for steps 01 and 02, then sequentially for remaining steps.
+// Aggregation processes sources in parallel for steps 01 and 02, then sequentially for remaining steps.
 
 export default inngest.createFunction(
   // Config
@@ -70,13 +70,9 @@ export default inngest.createFunction(
     // Wait for both steps to complete in parallel
     const [pipelineRequest, run] = await Promise.all([getPipelineRequest, initializeRun]);
 
-    // 3️⃣ Validate multiple sources for aggregation -----
+    // 3️⃣ Validate sources for aggregation -----
     if (!pipelineRequest.sources || pipelineRequest.sources.length === 0) {
       throw new Error("Aggregation pipeline requires at least one source");
-    }
-
-    if (pipelineRequest.sources.length === 1) {
-      throw new Error("Aggregation pipeline requires multiple sources. Use digestion for single source.");
     }
 
     // 4️⃣ Update status to started -----

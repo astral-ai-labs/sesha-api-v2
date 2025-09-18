@@ -1,7 +1,7 @@
 /* ==========================================================================*/
 // index.ts — Create outline step execution
 /* ==========================================================================*/
-// Purpose: Create structural outline for aggregated article from multiple sources
+// Purpose: Create structural outline for aggregated article from source(s)
 // Sections: Imports, Helpers, Implementation, Public API
 /* ==========================================================================*/
 
@@ -54,7 +54,7 @@ function hasVerbatimSource(sources: CreateOutlineRequest["sources"]): boolean {
 /* ==========================================================================*/
 
 /**
- * Create structural outline for aggregated article from multiple sources.
+ * Create structural outline for aggregated article from source(s).
  */
 async function createOutline(request: CreateOutlineRequest, stepConfig: StepConfig): Promise<CreateOutlineResponse> {
   // 1️⃣ Prepare sources with combined facts ----

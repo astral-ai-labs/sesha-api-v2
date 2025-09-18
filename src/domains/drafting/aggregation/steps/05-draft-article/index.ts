@@ -1,7 +1,7 @@
 /* ==========================================================================*/
 // index.ts — Draft aggregated article step execution
 /* ==========================================================================*/
-// Purpose: Generate the full aggregated article from multiple sources
+// Purpose: Generate the full aggregated article from source(s)
 // Sections: Imports, Implementation, Public API
 /* ==========================================================================*/
 
@@ -24,7 +24,7 @@ import { getExampleArticles, getWordTarget, prepareSources, getSentenceGuidance 
 /* ==========================================================================*/
 
 /**
- * Generate the full aggregated article from multiple sources and outline.
+ * Generate the full aggregated article from source(s) and outline.
  */
 async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig): Promise<DraftArticleResponse> {
   // 1️⃣ Get word target and examples ----
