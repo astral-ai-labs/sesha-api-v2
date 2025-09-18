@@ -4,8 +4,31 @@
 // Purpose: Type definitions for conditional facts extraction processing
 /* ==========================================================================*/
 
-import type { StepRequest, StepResponse } from "@/core/types/step";
-import type { SourceFactsResult, SourceFactsConditionalResult } from "../../types";
+// Internal Modules ----
+import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/runner";
+import type { LLMTokenUsage } from "@/core/usage/types";
+
+/* ==========================================================================*/
+// Types & Interfaces
+/* ==========================================================================*/
+
+/**
+ * Result from step 01 extract facts for a single source.
+ */
+interface SourceFactsResult {
+  sourceNumber: number;
+  extractedFacts: string;
+  usage: LLMTokenUsage[];
+}
+
+/**
+ * Result from step 02 conditional processing for a single source.
+ */
+interface SourceFactsConditionalResult {
+  sourceNumber: number;
+  factsBitSplitting2: string;
+  usage: LLMTokenUsage[];
+}
 
 /* ==========================================================================*/
 // Context & Output Types
@@ -20,11 +43,11 @@ interface ExtractFactsConditionalContext {
 }
 
 /**
- * Output from conditional facts processing via Promise.all.
+ * Output from conditional facts processing for a single source.
  */
 interface ExtractFactsConditionalOutput {
-  /** Array of conditionally processed facts from each source */
-  extractedFactsConditionalResults: SourceFactsConditionalResult[];
+  /** Conditionally processed facts for this source */
+  factsBitSplitting2: string;
 }
 
 /* ==========================================================================*/
@@ -33,3 +56,4 @@ interface ExtractFactsConditionalOutput {
 
 export type ExtractFactsConditionalRequest = StepRequest<ExtractFactsConditionalContext>;
 export type ExtractFactsConditionalResponse = StepResponse<ExtractFactsConditionalOutput>;
+export type { SourceFactsResult, SourceFactsConditionalResult };
