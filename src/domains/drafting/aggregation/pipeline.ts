@@ -16,8 +16,8 @@ import { extractFactsConditional } from "./steps/02-extract-facts-conditional";
 import { generateHeadlines } from "./steps/03-generate-headlines";
 import { createOutline } from "./steps/04-create-outline";
 import { draftArticle } from "./steps/05-draft-article";
+import { reviseArticle } from "./steps/06-revise-article";
 // TODO: Import remaining steps when implemented
-// import { reviseArticle } from "./steps/06-revise-article";
 // import { addSourceAttribution } from "./steps/07-source-attribution";
 // import { applyColorCoding } from "./steps/08-apply-color-coding";
 import { getStepConfig, stepName } from "./steps.config";
@@ -251,23 +251,23 @@ export default inngest.createFunction(
       return await updateArticleStatus(articleId, "70%");
     });
 
-    // TODO: Step 06 - Revise article (sequential)
-    // stepName = "06-revise-article";
-    // const revisedArticle = await step.run(stepName, async () => {
-    //   const request = {
-    //     ...baseStepRequest,
-    //     sources: pipelineRequest.sources,
-    //     context: {
-    //       draftedArticle: draftedArticle.output.draftedArticle,
-    //     },
-    //   };
-    //   return await reviseArticle(request, getStepConfig(stepName));
-    // });
+    // 🔟 Revise article (sequential) -----
+    stepName = "06-revise-article";
+    const revisedArticle = await step.run(stepName, async () => {
+      const request = {
+        ...baseStepRequest,
+        sources: pipelineRequest.sources,
+        context: {
+          draftedArticle: draftedArticle.output.draftedArticle,
+        },
+      };
+      return await reviseArticle(request, getStepConfig(stepName));
+    });
 
-    // TODO: Update status after step 6
-    // await step.run("update-status-80", async () => {
-    //   return await updateArticleStatus(articleId, "80%");
-    // });
+    // Update status after step 6
+    await step.run("update-status-80", async () => {
+      return await updateArticleStatus(articleId, "80%");
+    });
 
     // TODO: Step 07 - Source attribution (sequential)
     // stepName = "07-source-attribution";
@@ -332,7 +332,6 @@ export default inngest.createFunction(
     //   });
     // });
 
-    // TODO: Return aggregated results from all steps
     return {
       pipelineRequest,
       run,
@@ -341,7 +340,8 @@ export default inngest.createFunction(
       generatedHeadlines,
       createdOutline,
       draftedArticle,
-      // revisedArticle,
+      revisedArticle,
+      // TODO: Add remaining steps when implemented
       // attributedArticle,
       // colorCodedArticle,
     };
