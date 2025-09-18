@@ -1,11 +1,10 @@
 /* ==========================================================================*/
 // types.ts — Step 04: Create Outline Types
 /* ==========================================================================*/
-// Purpose: Type definitions for creating article outline
+// Purpose: Type definitions for creating article outline from multiple sources
 /* ==========================================================================*/
 
-import type { StepRequest, StepResponse } from "@/core/types/step";
-import type { SourceFactsResult, SourceFactsConditionalResult } from "../../types";
+import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/runner";
 
 /* ==========================================================================*/
 // Context & Output Types
@@ -16,11 +15,17 @@ import type { SourceFactsResult, SourceFactsConditionalResult } from "../../type
  */
 interface CreateOutlineContext {
   /** Facts extracted from each source from step 01 */
-  extractedFactsResults: SourceFactsResult[];
+  extractedFactsResults: Array<{
+    sourceNumber: number;
+    extractedFacts: string;
+  }>;
   /** Conditionally processed facts from each source from step 02 */
-  extractedFactsConditionalResults: SourceFactsConditionalResult[];
-  /** Generated headlines from step 03 */
-  generatedHeadlines: string;
+  extractedFactsConditionalResults: Array<{
+    sourceNumber: number;
+    factsBitSplitting2: string;
+  }>;
+  /** Generated headline from step 03 */
+  generatedHeadline: string;
   /** Generated content blobs from step 03 */
   generatedBlobs: string[];
 }
