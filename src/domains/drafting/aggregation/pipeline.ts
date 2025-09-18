@@ -17,8 +17,8 @@ import { generateHeadlines } from "./steps/03-generate-headlines";
 import { createOutline } from "./steps/04-create-outline";
 import { draftArticle } from "./steps/05-draft-article";
 import { reviseArticle } from "./steps/06-revise-article";
+import { addSourceAttribution } from "./steps/07-source-attribution";
 // TODO: Import remaining steps when implemented
-// import { addSourceAttribution } from "./steps/07-source-attribution";
 // import { applyColorCoding } from "./steps/08-apply-color-coding";
 import { getStepConfig, stepName } from "./steps.config";
 import { getArticleAsPipelineRequest, createRunSkeleton, updateArticleStatus, updateRun } from "../common/operations";
@@ -269,23 +269,23 @@ export default inngest.createFunction(
       return await updateArticleStatus(articleId, "80%");
     });
 
-    // TODO: Step 07 - Source attribution (sequential)
-    // stepName = "07-source-attribution";
-    // const attributedArticle = await step.run(stepName, async () => {
-    //   const request = {
-    //     ...baseStepRequest,
-    //     sources: pipelineRequest.sources,
-    //     context: {
-    //       revisedArticle: revisedArticle.output.revisedArticle,
-    //     },
-    //   };
-    //   return await addSourceAttribution(request, getStepConfig(stepName));
-    // });
+    // 1️⃣1️⃣ Add source attribution (sequential) -----
+    stepName = "07-source-attribution";
+    const attributedArticle = await step.run(stepName, async () => {
+      const request = {
+        ...baseStepRequest,
+        sources: pipelineRequest.sources,
+        context: {
+          revisedArticle: revisedArticle.output.revisedArticle,
+        },
+      };
+      return await addSourceAttribution(request, getStepConfig(stepName));
+    });
 
-    // TODO: Update status after step 7
-    // await step.run("update-status-90", async () => {
-    //   return await updateArticleStatus(articleId, "90%");
-    // });
+    // Update status after step 7
+    await step.run("update-status-90", async () => {
+      return await updateArticleStatus(articleId, "90%");
+    });
 
     // TODO: Step 08 - Apply color coding (sequential, final step)
     // stepName = "08-apply-color-coding";
@@ -341,8 +341,8 @@ export default inngest.createFunction(
       createdOutline,
       draftedArticle,
       revisedArticle,
+      attributedArticle,
       // TODO: Add remaining steps when implemented
-      // attributedArticle,
       // colorCodedArticle,
     };
   }
