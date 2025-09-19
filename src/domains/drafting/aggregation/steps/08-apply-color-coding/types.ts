@@ -4,7 +4,7 @@
 // Purpose: Type definitions for applying color coding and rich formatting
 /* ==========================================================================*/
 
-import type { StepRequest, StepResponse } from "@/core/types/step";
+import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/runner";
 
 /* ==========================================================================*/
 // Context & Output Types
