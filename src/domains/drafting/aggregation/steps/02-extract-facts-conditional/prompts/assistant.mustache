@@ -1,23 +1,23 @@
-{{#source.isPrimarySource}}
+{{#source.flags.isPrimarySource}}
 <!-- SYSTEM PROMPT PRIMARY SOURCE -->
 <source-{{source.number}}-content><first-half>
 {{source.factsBitSplitting}}</first-half>
 <second-half>
 <!-- END SYSTEM PROMPT PRIMARY SOURCE -->
-{{/source.isPrimarySource}}
+{{/source.flags.isPrimarySource}}
 
 
-{{^source.isPrimarySource}}
-{{#source.useVerbatim}}
+{{^source.flags.isPrimarySource}}
+{{#source.flags.copySourceVerbatim}}
 <!-- SYSTEM PROMPT VERBATIM -->
 Here are two dashes:
 <!-- END SYSTEM PROMPT VERBATIM -->
-{{/source.useVerbatim}}
+{{/source.flags.copySourceVerbatim}}
 
 
-{{^source.isVerbatim}}
+{{^source.flags.copySourceVerbatim}}
 <!-- SYSTEM PROMPT DEFAULT -->
 Here are two dashes:
 <!-- END SYSTEM PROMPT DEFAULT -->
-{{/source.isVerbatim}}
-{{/source.isPrimarySource}}
+{{/source.flags.copySourceVerbatim}}
+{{/source.flags.isPrimarySource}}

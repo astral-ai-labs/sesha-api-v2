@@ -17,6 +17,7 @@ import { simpleGenerateText } from "@/core/ai/call";
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { ExtractFactsRequest, ExtractFactsResponse } from "./types";
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
 // Implementation
@@ -29,37 +30,12 @@ import type { StepConfig } from "@/domains/drafting/common/types/runner";
  * - Verbatim sources: Word-for-word reprinting with source tags
  * - Regular sources: Full rewrite with fact extraction and quote preservation
  */
-export async function extractFacts(
-  request: ExtractFactsRequest, 
-  stepConfig: StepConfig
-): Promise<ExtractFactsResponse> {
-  // 1️⃣ Validate input -----
-  if (!request.sources || request.sources.length === 0) {
-    throw new Error("At least one source is required for fact extraction");
-  }
-
-  if (request.sources.length > 1) {
-    throw new Error("Extract facts step processes only one source at a time");
-  }
-
-  const source = request.sources[0];
-
-  if (!source.text?.trim()) {
-    throw new Error(`Source ${source.number} has no content to process`);
-  }
-
+export async function extractFacts(request: ExtractFactsRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<ExtractFactsResponse> {
   // 2️⃣ Prepare template variables -----
-  const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-  
+  const currentDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+
   const userTemplateVariables = {
-    source: {
-      number: source.number,
-      attribution: source.attribution,
-      accredit: source.attribution, // Legacy field name used in prompts
-      text: source.text,
-      isPrimarySource: source.flags.isPrimarySource,
-      useVerbatim: source.flags.copySourceVerbatim,
-    },
+    source: request.sources[0],
     date: currentDate,
   };
 
@@ -70,7 +46,14 @@ export async function extractFacts(
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
   const formattedAssistant = formatPrompt(prompts.assistantTemplate, userTemplateVariables, PromptType.ASSISTANT);
 
-  // 4️⃣ Generate AI response -----
+  // 4️⃣ Log final prompts before AI call -----
+  verboseLogger?.logStepPrompts("01-extract-facts", {
+    system: formattedSystem,
+    user: formattedUser,
+    assistant: formattedAssistant
+  });
+
+  // 5️⃣ Generate AI response -----
   const aiResult = await simpleGenerateText({
     model: stepConfig.model,
     systemPrompt: formattedSystem,
@@ -80,12 +63,13 @@ export async function extractFacts(
     maxTokens: stepConfig.maxTokens,
   });
 
-  // 5️⃣ Structure response with usage tracking -----
-  return createSuccessResponse(
-    { extractedFacts: aiResult.text }, 
-    stepConfig.model, 
-    aiResult.usage
-  );
+  // 6️⃣ Structure response with usage tracking -----
+  const response = createSuccessResponse({ extractedFacts: aiResult.text }, stepConfig.model, aiResult.usage);
+  
+  // 7️⃣ Log step output -----
+  verboseLogger?.logStepOutput("01-extract-facts", response.output);
+  
+  return response;
 }
 
 /* ==========================================================================*/

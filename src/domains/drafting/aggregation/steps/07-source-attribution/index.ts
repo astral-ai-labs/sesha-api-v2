@@ -17,6 +17,7 @@ import { simpleGenerateText } from "@/core/ai/call";
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { SourceAttributionRequest, SourceAttributionResponse } from "./types";
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
 // Implementation
@@ -25,11 +26,15 @@ import type { StepConfig } from "@/domains/drafting/common/types/runner";
 /**
  * Add proper in-sentence attribution for each source used in aggregated content.
  */
-export async function addSourceAttribution(request: SourceAttributionRequest, stepConfig: StepConfig): Promise<SourceAttributionResponse> {
+export async function addSourceAttribution(request: SourceAttributionRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<SourceAttributionResponse> {
   // 1️⃣ Validate input ----
   if (!request.context.revisedArticle?.trim()) {
     throw new Error("Revised article cannot be empty");
   }
+
+  const systemTemplateVariables = {
+    sources: request.sources,
+  };
 
   // 2️⃣ Prepare template variables ----
   const userTemplateVariables = {
@@ -37,12 +42,23 @@ export async function addSourceAttribution(request: SourceAttributionRequest, st
     sources: request.sources,
   };
 
+  const assistantTemplateVariables = {
+    sources: request.sources,
+  };
+
   // 3️⃣ Load and format prompts ----
   const prompts = await readAllPrompts(__dirname);
 
-  const formattedSystem = formatPrompt(prompts.systemTemplate, undefined, PromptType.SYSTEM);
+  const formattedSystem = formatPrompt(prompts.systemTemplate, systemTemplateVariables, PromptType.SYSTEM);
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
-  const formattedAssistant = formatPrompt(prompts.assistantTemplate, undefined, PromptType.ASSISTANT);
+  const formattedAssistant = formatPrompt(prompts.assistantTemplate, assistantTemplateVariables, PromptType.ASSISTANT);
+
+  // 4️⃣ Log final prompts before AI call ----
+  verboseLogger?.logStepPrompts(stepConfig.stepName, {
+    system: formattedSystem,
+    user: formattedUser,
+    assistant: formattedAssistant,
+  });
 
   // 4️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
@@ -56,12 +72,17 @@ export async function addSourceAttribution(request: SourceAttributionRequest, st
 
   // 5️⃣ Clean up the response ----
   const cleanedText = aiResult.text
-    .replace(/<\/?article[^>]*>/g, '') // Remove any <article> or </article> tags
-    .replace(/<\/?rewrite[^>]*>/g, '') // Remove any <rewrite> or </rewrite> tags
+    .replace(/<\/?article[^>]*>/g, "") // Remove any <article> or </article> tags
+    .replace(/<\/?rewrite[^>]*>/g, "") // Remove any <rewrite> or </rewrite> tags
     .trim(); // Remove leading and trailing whitespace
 
   // 6️⃣ Structure response with usage tracking ----
-  return createSuccessResponse({ attributedArticle: cleanedText }, stepConfig.model, aiResult.usage);
+  const response = createSuccessResponse({ attributedArticle: cleanedText }, stepConfig.model, aiResult.usage);
+
+  // 7️⃣ Log step output ----
+  verboseLogger?.logStepOutput(stepConfig.stepName, response.output);
+
+  return response;
 }
 
 /* ==========================================================================*/

@@ -10,7 +10,7 @@
 /* ==========================================================================*/
 
 // Internal Modules ----
-import type { LengthRange } from "@/domains/drafting/common/types/_primitives";
+import type { LengthRange } from "@/domains/drafting/common/types/primitives";
 
 /* ==========================================================================*/
 // Constants
@@ -177,24 +177,6 @@ A comprehensive news aggregation example would go here for longer articles, weav
 }
 
 /**
- * Prepare sources for aggregation template variables.
- */
-function prepareSources(extractedFactsResults: Array<{ sourceNumber: number; extractedFacts: string }>, extractedFactsConditionalResults: Array<{ sourceNumber: number; factsBitSplitting2: string }>, sources: any[]): any[] {
-  return sources.map((source, index) => {
-    const sourceNumber = index + 1;
-    const extractedFacts = extractedFactsResults.find(r => r.sourceNumber === sourceNumber);
-    const conditionalFacts = extractedFactsConditionalResults.find(r => r.sourceNumber === sourceNumber);
-    
-    return {
-      ...source,
-      factsBitSplitting1: extractedFacts?.extractedFacts || "",
-      factsBitSplitting2: conditionalFacts?.factsBitSplitting2 || "",
-      accredit: source.attribution || `Source ${sourceNumber}`,
-    };
-  });
-}
-
-/**
  * Generate sentence guidance based on word target for aggregation articles.
  */
 function getSentenceGuidance(wordTarget: number): string {
@@ -212,9 +194,4 @@ function getSentenceGuidance(wordTarget: number): string {
 /* ==========================================================================*/
 // Public API
 /* ==========================================================================*/
-export {
-  getExampleArticles,
-  getWordTarget,
-  prepareSources,
-  getSentenceGuidance,
-};
+export { getExampleArticles, getWordTarget, getSentenceGuidance };

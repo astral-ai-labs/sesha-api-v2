@@ -25,11 +25,11 @@ You must use simple, straightforward, nonrepetitive language so that the general
 For example, rather than writing something clunky and vague like "Sharing his thoughts on the health topic, Biden said he 'wouldn't expect it to get better,' emphasizing his concern." You would write something SPECIFIC, PITHY, and CLEAR like "Biden said he "wouldn't expect it to get better.'" since the quote speaks for itself and there is no need for extra analysis. 
 Today's Date: {{date}}
 
-{{#sources.0.useVerbatim}}You MUST begin the article with this exact FULL text with (Source 1 {{sources.0.accredit}}) written after each line: 
+{{#sources.0.flags.copySourceVerbatim}}You MUST begin the article with this exact FULL text with (Source 1 {{sources.0.attribution}}) written after each line: 
 <article-opening>
 {{sources.0.factsBitSplitting1}}
 </article-opening>
-Note: make sure the sentences after flow seamlessly from the editor-written opening.{{/sources.0.useVerbatim}}
+Note: make sure the sentences after flow seamlessly from the editor-written opening.{{/sources.0.flags.copySourceVerbatim}}
 
 The article must be at least {{wordTarget}} words long. The more detail the better (but no repetition).
 
@@ -43,22 +43,22 @@ Source Article Input List (craft the aggregated news article from these source a
 NOTE: You may only include direct quotes in your article if they were already inside quotation marks as direct quotes in the source material
 
 <input source article 1>
-{{#sources.0.useVerbatim}}
-You MUST begin the article with this exact FULL text with (Source 1 {{sources.0.accredit}}) written after each line:
+{{#sources.0.flags.copySourceVerbatim}}
+You MUST begin the article with this exact FULL text with (Source 1 {{sources.0.attribution}}) written after each line:
 <article-opening>{{sources.0.factsBitSplitting1}}</article-opening>
-{{/sources.0.useVerbatim}}
-{{^sources.0.useVerbatim}}
-{{#sources.0.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.0.isPrimarySource}}
+{{/sources.0.flags.copySourceVerbatim}}
+{{^sources.0.flags.copySourceVerbatim}}
+{{#sources.0.flags.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.0.flags.isPrimarySource}}
 Source 1: This is the most important source (Pull as much content as possible from this source)
 <source-1-content>
 {{sources.0.factsBitSplitting1}}{{sources.0.factsBitSplitting2}}
 </source-1-content>
-{{/sources.0.useVerbatim}}
+{{/sources.0.flags.copySourceVerbatim}}
 </input source article 1>
 
 {{#sources.1.factsBitSplitting1}}
 This is the second most important source:
-{{#sources.1.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.1.isPrimarySource}}
+{{#sources.1.flags.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.1.flags.isPrimarySource}}
 <input source article 2>
 <source-2-content>
 {{sources.1.factsBitSplitting1}}{{sources.1.factsBitSplitting2}}
@@ -68,7 +68,7 @@ This is the second most important source:
 
 {{#sources.2.factsBitSplitting1}}
 This is the third most important source:
-{{#sources.2.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.2.isPrimarySource}}
+{{#sources.2.flags.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.2.flags.isPrimarySource}}
 <input source article 3>
 <source-3-content>
 {{sources.2.factsBitSplitting1}}{{sources.2.factsBitSplitting2}}
@@ -78,7 +78,7 @@ This is the third most important source:
 
 {{#sources.3.factsBitSplitting1}}
 This is the fourth most important source (only take a bit from this):
-{{#sources.3.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.3.isPrimarySource}}
+{{#sources.3.flags.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.3.flags.isPrimarySource}}
 <input source article 4>
 <source-4-content>
 {{sources.3.factsBitSplitting1}}{{sources.3.factsBitSplitting2}}
@@ -88,7 +88,7 @@ This is the fourth most important source (only take a bit from this):
 
 {{#sources.4.factsBitSplitting1}}
 This is the fifth most important source (take very little from this):
-{{#sources.4.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.4.isPrimarySource}}
+{{#sources.4.flags.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.4.flags.isPrimarySource}}
 <input source article 5>
 <source-5-content>
 {{sources.4.factsBitSplitting1}}{{sources.4.factsBitSplitting2}}
@@ -98,7 +98,7 @@ This is the fifth most important source (take very little from this):
 
 {{#sources.5.factsBitSplitting1}}
 This is the sixth most important source (take very little from this):
-{{#sources.5.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.5.isPrimarySource}}
+{{#sources.5.flags.isPrimarySource}}Make sure to credit the author and publication when referencing this source: {{/sources.5.flags.isPrimarySource}}
 <input source article 6>
 <source-6-content>
 {{sources.5.factsBitSplitting1}}{{sources.5.factsBitSplitting2}}

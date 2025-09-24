@@ -14,19 +14,23 @@ import { serve } from "inngest/next";
 
 // Internal Modules ----
 import { inngest } from "@/core/inngest/client";
+import digestionPipeline from "@/domains/drafting/digestion/pipeline";
+import aggregationPipeline from "@/domains/drafting/aggregation/pipeline";
+import { helloWorld } from "@/domains/inngest_health/function";
 
 /* ==========================================================================*/
 // Configuration
 /* ==========================================================================*/
 
 /**
- * Inngest API configuration for serving functions.
- * Currently serves zero functions - functions will be added later.
+ * Inngest API configuration for serving drafting pipeline functions.
  */
 const inngestApi = serve({
   client: inngest,
   functions: [
-    /* TODO:your functions will be passed here later! */
+    digestionPipeline,
+    aggregationPipeline,
+    helloWorld,
   ],
 });
 

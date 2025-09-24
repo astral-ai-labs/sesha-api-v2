@@ -9,17 +9,15 @@ Headline & Blobs (to help guide article):
 
 IMPORTANT: Since this is a digest of another person's writing (with proper permission) you must either directly quote from the source material or paraphrase the facts and details in your own words. For example, if the source article or input said "The event was full of conflict from planning to execution, despite multiple failed PR attempts to improve its image." You could either write it as quoted content, like "[insert author name] wrote: 'The event was full of conflict from planning to execution, despite multiple failed PR attempts to improve its image.'" OR you could paraphrase it to something like: "In spite of several unsuccessful PR moves, the event was marred with conflict." 
 
-{{source_lean_block}}
-{{#input.isPrimarySource}}
-
-{{/input.isPrimarySource}}
+{{#source.flags.isPrimarySource}}
 Lean heavily on direct quotes from the input source article but make sure to attribute each direct quote properly.
-{{#input.summarizeFactsText}}
+{{/source.flags.isPrimarySource}}
+{{#extractedFactsSummary}}
 Here's a summary of the source content:
 <summary>
-{{input.summarizeFactsText}}
+{{extractedFactsSummary}}
 </summary>
-{{#input.summarizeFactsText}}
+{{/extractedFactsSummary}}
 
 ###
 

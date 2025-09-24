@@ -17,34 +17,39 @@ import { simpleGenerateText } from "@/core/ai/call";
 import { createSuccessResponse, formatHeadlinesBlobs } from "@/domains/drafting/common/utils";
 import type { DraftArticleRequest, DraftArticleResponse } from "./types";
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
-import { getExampleArticles, getWordTarget, prepareSources, getSentenceGuidance } from "./helpers";
+import { getExampleArticles, getWordTarget, getSentenceGuidance } from "./helpers";
+import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
 // Implementation
 /* ==========================================================================*/
-
 /**
  * Generate the full aggregated article from source(s) and outline.
  */
-async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig): Promise<DraftArticleResponse> {
+async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<DraftArticleResponse> {
   // 1️⃣ Get word target and examples ----
   const wordTarget = getWordTarget(request.lengthRange);
   const exampleArticles = getExampleArticles(wordTarget);
   const sentenceGuidance = getSentenceGuidance(wordTarget);
-  
+
   // 2️⃣ Create headline and blobs text ----
   const headlineAndBlobsText = formatHeadlinesBlobs(request.context.generatedHeadlines, request.context.generatedBlobs);
-  
+
   // 3️⃣ Prepare sources with aggregated facts ----
-  const preparedSources = prepareSources(
-    request.context.extractedFactsResults,
-    request.context.extractedFactsConditionalResults,
-    request.sources
-  );
+  const preparedSources = request.sources.map((source) => {
+    const factsResult = request.context.extractedFactsResults.find((r) => r.sourceNumber === source.number);
+    const conditionalResult = request.context.extractedFactsConditionalResults.find((r) => r.sourceNumber === source.number);
+
+    return {
+      ...source,
+      factsBitSplitting1: factsResult?.extractedFacts || "",
+      factsBitSplitting2: conditionalResult?.factsBitSplitting2 || "",
+    };
+  });
 
   // 4️⃣ Determine if verbatim mode is used ----
-  const isVerbatim = request.sources.some(source => source.flags?.copySourceVerbatim);
-  
+  const isVerbatim = request.sources.some((source) => source.flags?.copySourceVerbatim);
+
   // 5️⃣ Prepare template variables ----
   const systemTemplateVariables = {
     isVerbatim,
@@ -53,7 +58,7 @@ async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig
     instructions: request.instructions,
     example_articles: exampleArticles,
   };
-  
+
   const userTemplateVariables = {
     headline: request.context.generatedHeadlines,
     blobs: headlineAndBlobsText,
@@ -62,11 +67,11 @@ async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig
     instructions: request.instructions,
     sentence_guidance: sentenceGuidance,
     sources: preparedSources,
-    date: new Date().toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    date: new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     }),
   };
 
@@ -76,6 +81,13 @@ async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig
   const formattedSystem = formatPrompt(prompts.systemTemplate, systemTemplateVariables, PromptType.SYSTEM);
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
   const formattedAssistant = formatPrompt(prompts.assistantTemplate, userTemplateVariables, PromptType.ASSISTANT);
+
+  // 7️⃣ Log final prompts before AI call ----
+  verboseLogger?.logStepPrompts(stepConfig.stepName, {
+    system: formattedSystem,
+    user: formattedUser,
+    assistant: formattedAssistant,
+  });
 
   // 7️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
@@ -88,7 +100,12 @@ async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig
   });
 
   // 8️⃣ Structure response with usage tracking ----
-  return createSuccessResponse({ draftedArticle: aiResult.text }, stepConfig.model, aiResult.usage);
+  const response = createSuccessResponse({ draftedArticle: aiResult.text }, stepConfig.model, aiResult.usage);
+
+  // 9️⃣ Log step output ----
+  verboseLogger?.logStepOutput(stepConfig.stepName, response.output);
+
+  return response;
 }
 
 /* ==========================================================================*/

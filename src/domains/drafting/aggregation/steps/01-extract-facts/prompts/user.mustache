@@ -1,5 +1,5 @@
-{{^source.useVerbatim}}
-{{^source.isPrimarySource}}
+{{^source.flags.copySourceVerbatim}}
+{{^source.flags.isPrimarySource}}
 <role>
 You are an expert editor ingesting an article to split it up into a list of facts (in your own words) and direct quotes from people.
 </role>
@@ -21,31 +21,31 @@ Rules:
 Note: Today's date is {{date}} (but don't rephrase any dates or relational timeframes like "last year") 
 
 <source-{{source.number}}-input>
-Source {{source.number}} {{source.accredit}}
+Source {{source.number}} {{source.attribution}}
 The source tag should be "(Source {{source.number}})"
 
 {{source.text}}
 </source-{{source.number}}-input>
-{{/source.isPrimarySource}}
+{{/source.flags.isPrimarySource}}
 
-{{#source.isPrimarySource}}
+{{#source.flags.isPrimarySource}}
 Reprint the article content and add source tags after each sentence along with credits to the author.  Do the first half of this input article:
 
 <source-{{source.number}}-input>
-Source {{source.number}} {{source.accredit}}
+Source {{source.number}} {{source.attribution}}
 
 {{source.text}}
 </source-{{source.number}}-input>
-{{/source.isPrimarySource}}
-{{/source.useVerbatim}}
+{{/source.flags.isPrimarySource}}
+{{/source.flags.copySourceVerbatim}}
 
-{{#source.useVerbatim}}
+{{#source.flags.copySourceVerbatim}}
 Reprint the editor-written opening word for word and add source tags after each sentence along with credits to the source. 
 
 <source-{{source.number}}-input>
-Source {{source.number}} {{source.accredit}}
+Source {{source.number}} {{source.attribution}}
 The source tag should be "(Source {{source.number}})"
 
 {{source.text}}
 </source-{{source.number}}-input>
-{{/source.useVerbatim}}
+{{/source.flags.copySourceVerbatim}}

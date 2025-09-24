@@ -17,6 +17,7 @@ import { simpleGenerateText } from "@/core/ai/call";
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { ExtractFactsConditionalRequest, ExtractFactsConditionalResponse } from "./types";
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
 // Implementation
@@ -27,47 +28,21 @@ import type { StepConfig } from "@/domains/drafting/common/types/runner";
  * For primary sources: Complete second-half processing from step 01 results.
  * For verbatim/default sources: Return minimal processing (dashes).
  */
-async function extractFactsConditional(
-  request: ExtractFactsConditionalRequest, 
-  stepConfig: StepConfig
-): Promise<ExtractFactsConditionalResponse> {
-  // 1️⃣ Validate input ----
-  if (!request.sources || request.sources.length !== 1) {
-    throw new Error("Extract facts conditional step requires exactly one source");
-  }
-
-  const source = request.sources[0];
-  
-  if (!request.context.extractedFactsResults) {
-    throw new Error("Extract facts conditional step requires results from step 01");
-  }
-
-  // 2️⃣ Find corresponding facts from step 01 ----
-  const correspondingFactsResult = request.context.extractedFactsResults.find(
-    result => result.sourceNumber === source.number
-  );
-
-  if (!correspondingFactsResult) {
-    throw new Error(`No facts found from step 01 for source ${source.number}`);
-  }
+async function extractFactsConditional(request: ExtractFactsConditionalRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<ExtractFactsConditionalResponse> {
+  // 1️⃣ Find corresponding facts from step 01 ----
+  const correspondingFactsResult = request.context.extractedFactsResults.find((result) => result.sourceNumber === request.sources[0].number);
 
   // 3️⃣ Prepare template variables ----
   const systemTemplateVariables = {
-    source: {
-      ...source,
-      factsBitSplitting: correspondingFactsResult.extractedFacts,
-      accredit: source.attribution,
-    },
-    date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+    source: request.sources[0],
+    factsBitSplitting: correspondingFactsResult?.extractedFacts,
+    date: new Date().toISOString().split("T")[0], // YYYY-MM-DD format
   };
 
   const userTemplateVariables = {
-    source: {
-      ...source,
-      factsBitSplitting: correspondingFactsResult.extractedFacts,
-      accredit: source.attribution,
-    },
-    date: new Date().toISOString().split('T')[0],
+    source: request.sources[0],
+    factsBitSplitting: correspondingFactsResult?.extractedFacts,
+    date: new Date().toISOString().split("T")[0],
   };
 
   // 4️⃣ Load and format prompts ----
@@ -77,7 +52,14 @@ async function extractFactsConditional(
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
   const formattedAssistant = formatPrompt(prompts.assistantTemplate, systemTemplateVariables, PromptType.ASSISTANT);
 
-  // 5️⃣ Generate AI response ----
+  // 5️⃣ Log final prompts before AI call ----
+  verboseLogger?.logStepPrompts(stepConfig.stepName, {
+    system: formattedSystem,
+    user: formattedUser,
+    assistant: formattedAssistant
+  });
+
+  // 6️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
     model: stepConfig.model,
     systemPrompt: formattedSystem,
@@ -87,19 +69,16 @@ async function extractFactsConditional(
     maxTokens: stepConfig.maxTokens,
   });
 
-  // 6️⃣ Structure response with usage tracking ----
-  return createSuccessResponse(
-    { factsBitSplitting2: aiResult.text }, 
-    stepConfig.model, 
-    aiResult.usage
-  );
+  // 7️⃣ Structure response with usage tracking ----
+  const response = createSuccessResponse({ factsBitSplitting2: aiResult.text }, stepConfig.model, aiResult.usage);
+  
+  // 8️⃣ Log step output ----
+  verboseLogger?.logStepOutput(stepConfig.stepName, response.output);
+  
+  return response;
 }
 
 /* ==========================================================================*/
 // Public API
 /* ==========================================================================*/
-export { 
-  extractFactsConditional,
-  type ExtractFactsConditionalRequest,
-  type ExtractFactsConditionalResponse 
-};
+export { extractFactsConditional, type ExtractFactsConditionalRequest, type ExtractFactsConditionalResponse };

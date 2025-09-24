@@ -1,30 +1,30 @@
-{{#source.isPrimarySource}}
+{{#source.flags.isPrimarySource}}
 <!-- SYSTEM PROMPT PRIMARY SOURCE -->
 Note: if all of the source content has ALREADY been accounted for in the first half, write "<second-half>empty</second-half>"
 Today's Date: {{date}}
 <source-{{source.number}}-input>
-Source {{source.number}} {{source.accredit}}{{^source.accredit}}
-The source tag should be "(Source {{source.number}})"{{/source.accredit}}
+Source {{source.number}} {{source.attribution}}{{^source.attribution}}
+The source tag should be "(Source {{source.number}})"{{/source.attribution}}
 
 {{source.text}}
 </source-{{source.number}}-input>
 <!-- END SYSTEM PROMPT PRIMARY SOURCE -->
-{{/source.isPrimarySource}}
+{{/source.flags.isPrimarySource}}
 
 
-{{^source.isPrimarySource}}
-{{#source.useVerbatim}}
+{{^source.flags.isPrimarySource}}
+{{#source.flags.copySourceVerbatim}}
 <!-- SYSTEM PROMPT VERBATIM -->
 <instructions>
 print two dashes: -- </instructions>
 <!-- END SYSTEM PROMPT VERBATIM -->
-{{/source.useVerbatim}}
+{{/source.flags.copySourceVerbatim}}
 
 
-{{^source.isVerbatim}}
+{{^source.flags.copySourceVerbatim}}
 <!-- SYSTEM PROMPT DEFAULT -->
 <instructions>
 print two dashes: -- </instructions>
 <!-- END SYSTEM PROMPT DEFAULT -->
-{{/source.isVerbatim}}
-{{/source.isPrimarySource}}
+{{/source.flags.copySourceVerbatim}}
+{{/source.flags.isPrimarySource}}

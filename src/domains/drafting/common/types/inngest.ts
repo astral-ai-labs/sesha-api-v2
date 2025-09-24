@@ -1,10 +1,11 @@
 // TODO: hopefully delete this file eventually
 
-import { RequestMetadata } from "./_primitives";
+import { RequestMetadata } from "./primitives";
 
 type DraftingInngestEvent = {
   data: {
-    metadata: RequestMetadata;
+    request: RequestMetadata;
+    verbose: boolean;
   };
 };
 

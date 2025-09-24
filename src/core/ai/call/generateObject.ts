@@ -10,8 +10,10 @@
 /* ==========================================================================*/
 
 // External Packages ---
-import { generateObject, LanguageModel } from "ai";
+import { generateObject } from "ai";
 import { z } from "zod";
+
+import {openai} from "@ai-sdk/openai";
 
 /* ==========================================================================*/
 // Types & Interfaces
@@ -21,12 +23,14 @@ import { z } from "zod";
  * Configuration for structured object generation.
  */
 interface GenerateObjectConfig<T> {
-  model: LanguageModel;
+  model: string;
   systemPrompt?: string;
   userPrompt: string;
+  assistantPrompt?: string;
   schema: z.ZodSchema<T>;
   temperature?: number;
   maxTokens?: number;
+
 }
 
 /**
@@ -50,11 +54,15 @@ interface GenerateObjectResponse<T> {
  */
 async function simpleGenerateObject<T>(config: GenerateObjectConfig<T>): Promise<GenerateObjectResponse<T>> {
   // 1️⃣ Generate structured object -----
+
+  const finalModel = config.model.toString();
+
   try {
     const result = await generateObject({
-      model: config.model,
+      model: openai(finalModel),
       system: config.systemPrompt,
       prompt: config.userPrompt,
+      assistant: config.assistantPrompt,
       schema: config.schema,
       temperature: config.temperature,
       maxOutputTokens: config.maxTokens,

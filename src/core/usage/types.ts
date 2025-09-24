@@ -16,10 +16,10 @@ interface LLMTokenUsage {
   outputTokens: number;
   /** Total tokens consumed */
   totalTokens: number;
-  /** Total cost in USD for the call */
-  costUsd?: number;
   /** Model identifier used for the request */
   model?: string;
+  /** Total cost in USD for the call */
+  costUsd?: number;
 }
 
 /**

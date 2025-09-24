@@ -18,6 +18,7 @@ import { createSuccessResponse, formatHeadlinesBlobs } from "@/domains/drafting/
 import type { DraftArticleRequest, DraftArticleResponse } from "./types";
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
 import { getExampleArticles, getWordTarget } from "./helpers";
+import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
 // Implementation
@@ -26,7 +27,7 @@ import { getExampleArticles, getWordTarget } from "./helpers";
 /**
  * Generate the full digest article from outline and source material.
  */
-async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig): Promise<DraftArticleResponse> {
+async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<DraftArticleResponse> {
   // 1️⃣ Get word target and examples ----
   const wordTarget = getWordTarget(request.lengthRange);
   const exampleArticles = getExampleArticles(wordTarget);
@@ -53,14 +54,24 @@ async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig
     createdOutline: request.context.createdOutline,
   };
 
+  const assistantTemplateVariables = {
+    wordTarget: wordTarget.toString(),
+  }
   // 4️⃣ Load and format prompts ----
   const prompts = await readAllPrompts(__dirname);
 
   const formattedSystem = formatPrompt(prompts.systemTemplate, systemTemplateVariables, PromptType.SYSTEM);
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
-  const formattedAssistant = formatPrompt(prompts.assistantTemplate, undefined, PromptType.ASSISTANT);
+  const formattedAssistant = formatPrompt(prompts.assistantTemplate, assistantTemplateVariables, PromptType.ASSISTANT);
 
-  // 4️⃣ Generate AI response ----
+  // 5️⃣ Log final prompts before AI call ----
+  verboseLogger?.logStepPrompts(stepConfig.stepName, {
+    system: formattedSystem,
+    user: formattedUser,
+    assistant: formattedAssistant
+  });
+
+  // 6️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
     model: stepConfig.model,
     systemPrompt: formattedSystem,
@@ -70,8 +81,13 @@ async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig
     maxTokens: stepConfig.maxTokens,
   });
 
-  // 5️⃣ Structure response with usage tracking ----
-  return createSuccessResponse({ draftedArticle: aiResult.text }, stepConfig.model, aiResult.usage);
+  // 7️⃣ Structure response with usage tracking ----
+  const response = createSuccessResponse({ draftedArticle: aiResult.text }, stepConfig.model, aiResult.usage);
+  
+  // 8️⃣ Log step output ----
+  verboseLogger?.logStepOutput(stepConfig.stepName, response.output);
+  
+  return response;
 }
 
 /* ==========================================================================*/

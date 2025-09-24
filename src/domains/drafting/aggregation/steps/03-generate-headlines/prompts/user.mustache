@@ -1,7 +1,7 @@
-Number of Blobs: {{input.noOfBlobs}}
+Number of Blobs: {{numberOfBlobs}}
 
 IMPORTANT EDITOR NOTES:  
-{{input.instructions}}
+{{instructions}}
 
 Additional editor instructions:
 Each blob MUST start with a different word
@@ -12,8 +12,8 @@ NOTE: You can only put things in direct quotes that were already in direct quote
 NOTE: Unless told otherwise, the headline should be based on the lede or angle for Source Article 1.
 
 Source Content:
-Source 1 (important){{#sources.0.isBaseSource}}
-This is the base source that should define the core story{{/sources.0.isBaseSource}}:
+Source 1 (important){{#sources.0.flags.isBaseSource}}
+This is the base source that should define the core story{{/sources.0.flags.isBaseSource}}:
 {{#sources.0.factsBitSplitting1}}
 {{sources.0.factsBitSplitting1}}{{sources.0.factsBitSplitting2}}{{/sources.0.factsBitSplitting1}}
 

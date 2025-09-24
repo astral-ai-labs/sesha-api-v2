@@ -3,12 +3,13 @@
 /* ==========================================================================*/
 
 // Internal (Current Module) ----
-import { RequestMetadata } from "./_primitives";
+import { RequestMetadata } from "./primitives";
 
 /* ==========================================================================*/
 // Types (Component-specific only)
 /* ==========================================================================*/
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface DraftingAPIRequest extends RequestMetadata {}
 
 interface DraftingAPIResponse {

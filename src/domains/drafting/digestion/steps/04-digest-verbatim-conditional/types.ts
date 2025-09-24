@@ -4,7 +4,7 @@
 // Purpose: Type definitions for conditional verbatim content processing
 /* ==========================================================================*/
 
-import type { StepRequest, StepResponse } from "@/core/types/step";
+import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/runner";
 
 /* ==========================================================================*/
 // Context & Output Types
@@ -14,6 +14,7 @@ import type { StepRequest, StepResponse } from "@/core/types/step";
  * Context for digest verbatim conditional step - no previous step results needed.
  * This step operates directly on source content when copySourceVerbatim flag is true.
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface DigestVerbatimConditionalContext {}
 
 /**

@@ -17,6 +17,7 @@ import { simpleGenerateText } from "@/core/ai/call";
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { ReviseArticleRequest, ReviseArticleResponse } from "./types";
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
 // Implementation
@@ -25,7 +26,7 @@ import type { StepConfig } from "@/domains/drafting/common/types/runner";
 /**
  * Revise aggregated article with three specific edits for clarity and readability.
  */
-async function reviseArticle(request: ReviseArticleRequest, stepConfig: StepConfig): Promise<ReviseArticleResponse> {
+async function reviseArticle(request: ReviseArticleRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<ReviseArticleResponse> {
   // 1️⃣ Prepare template variables ----
   const userTemplateVariables = {
     sources: request.sources,
@@ -39,6 +40,13 @@ async function reviseArticle(request: ReviseArticleRequest, stepConfig: StepConf
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
   const formattedAssistant = formatPrompt(prompts.assistantTemplate, undefined, PromptType.ASSISTANT);
 
+  // 3️⃣ Log final prompts before AI call ----
+  verboseLogger?.logStepPrompts(stepConfig.stepName, {
+    system: formattedSystem,
+    user: formattedUser,
+    assistant: formattedAssistant
+  });
+
   // 3️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
     model: stepConfig.model,
@@ -50,7 +58,12 @@ async function reviseArticle(request: ReviseArticleRequest, stepConfig: StepConf
   });
 
   // 4️⃣ Structure response with usage tracking ----
-  return createSuccessResponse({ revisedArticle: aiResult.text }, stepConfig.model, aiResult.usage);
+  const response = createSuccessResponse({ revisedArticle: aiResult.text }, stepConfig.model, aiResult.usage);
+  
+  // 5️⃣ Log step output ----
+  verboseLogger?.logStepOutput(stepConfig.stepName, response.output);
+  
+  return response;
 }
 
 /* ==========================================================================*/

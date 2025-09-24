@@ -8,6 +8,9 @@
 import { readFile } from "fs/promises";
 import path from "path";
 
+// External Packages ---
+import { NonRetriableError } from "inngest";
+
 // Internal Modules ----
 import { PromptType } from "@/core/ai/prompts/types";
 
@@ -20,9 +23,17 @@ import { PromptType } from "@/core/ai/prompts/types";
  */
 async function readPrompt(stepPath: string, promptType: PromptType): Promise<string> {
   const fileName = `${promptType}.mustache`;
-  const filePath = path.join(stepPath, "prompts", fileName);
 
-  return readFile(filePath, "utf-8");
+  // Handle ROOT path issue by extracting relative path from src/
+  const cleanStepPath = stepPath.includes("/ROOT/") && stepPath.includes("src/") ? stepPath.substring(stepPath.indexOf("src/")) : stepPath;
+
+  const filePath = path.join(process.cwd(), cleanStepPath, "prompts", fileName);
+
+  try {
+    return readFile(filePath, "utf-8");
+  } catch (error: unknown) {
+    throw new NonRetriableError(`Failed to read prompt file ${filePath}`, { cause: error instanceof Error ? error : new Error(String(error)) });
+  }
 }
 
 /**

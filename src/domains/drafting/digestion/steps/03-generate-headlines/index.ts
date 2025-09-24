@@ -19,6 +19,8 @@ import { simpleGenerateObject } from "@/core/ai/call/generateObject";
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { GenerateHeadlinesRequest, GenerateHeadlinesResponse } from "./types";
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { VerboseLogger } from "@/domains/drafting/common/utils";
+import { DEFAULT_STRUCTURED_MODEL } from "@/domains/drafting/common/defaults";
 
 /* ==========================================================================*/
 // Schema
@@ -36,7 +38,7 @@ const HeadlineAndBlobsSchema = z.object({
 /**
  * Generate punchy headline and engaging content blobs from extracted facts.
  */
-async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: StepConfig): Promise<GenerateHeadlinesResponse> {
+async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<GenerateHeadlinesResponse> {
   const userTemplateVariables = {
     numberOfBlobs: request.numberOfBlobs,
     instructions: request.instructions,
@@ -52,7 +54,14 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
   const formattedAssistant = formatPrompt(prompts.assistantTemplate, undefined, PromptType.ASSISTANT);
 
-  // 3️⃣ Generate raw headline and blobs ----
+  // 3️⃣ Log final prompts before AI call ----
+  verboseLogger?.logStepPrompts(stepConfig.stepName, {
+    system: formattedSystem,
+    user: formattedUser,
+    assistant: formattedAssistant
+  });
+
+  // 4️⃣ Generate raw headline and blobs ----
   const rawResult = await simpleGenerateText({
     model: stepConfig.model,
     systemPrompt: formattedSystem,
@@ -64,7 +73,7 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
 
   // 4️⃣ Structure the output ----
   const structuredResult = await simpleGenerateObject({
-    model: stepConfig.model,
+    model: stepConfig.structuredModel || DEFAULT_STRUCTURED_MODEL,
     systemPrompt: "Do not change any word in the output. Just return the headline and blobs in the specified format. Do not add any other text or commentary. Verbatim.",
     userPrompt: "Output the headline and blobs in the specified format. Here is the raw output from the AI: " + rawResult.text,
     schema: HeadlineAndBlobsSchema,
@@ -80,7 +89,7 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
   };
 
   // 6️⃣ Structure response with usage tracking ----
-  return createSuccessResponse(
+  const response = createSuccessResponse(
     {
       generatedHeadline: structuredResult.object.headline,
       generatedBlobs: structuredResult.object.blobs,
@@ -88,6 +97,11 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
     stepConfig.model,
     combinedUsage
   );
+  
+  // 7️⃣ Log step output ----
+  verboseLogger?.logStepOutput(stepConfig.stepName, response.output);
+  
+  return response;
 }
 
 /* ==========================================================================*/

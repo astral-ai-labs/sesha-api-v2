@@ -1,4 +1,4 @@
-{{#source.isPrimarySource}}
+{{#source.flags.isPrimarySource}}
 <!-- SYSTEM PROMPT PRIMARY SOURCE -->
 Instructions:
 Reprint the article content and add source tags after each sentence along with credits to the author. Remove extranneous content like "click here" and "for more, follow newsweek" etc. from the provided text.
@@ -65,20 +65,20 @@ By John Smith, edited by Staff Writers at Reuters (Source 3 Reuters)
 </second-half>
 </source-content>
 <!-- END SYSTEM PROMPT PRIMARY SOURCE -->
-{{/source.isPrimarySource}}
+{{/source.flags.isPrimarySource}}
 
 
-{{^source.isPrimarySource}}
-{{#source.useVerbatim}}
+{{^source.flags.isPrimarySource}}
+{{#source.flags.copySourceVerbatim}}
 <!-- SYSTEM PROMPT VERBATIM -->
 --
 <!-- END SYSTEM PROMPT VERBATIM -->
-{{/source.useVerbatim}}
+{{/source.flags.copySourceVerbatim}}
 
 
-{{^source.isVerbatim}}
+{{^source.flags.copySourceVerbatim}}
 <!-- SYSTEM PROMPT DEFAULT -->
 --
 <!-- END SYSTEM PROMPT DEFAULT -->
-{{/source.isVerbatim}}
-{{/source.isPrimarySource}}
+{{/source.flags.copySourceVerbatim}}
+{{/source.flags.isPrimarySource}}

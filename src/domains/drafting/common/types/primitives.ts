@@ -9,10 +9,23 @@ import { ingestionTypeEnum, lengthEnum, blobsEnum } from "@/core/db/schema";
 // Low Level Types
 /* ==========================================================================*/
 
-
 type DraftType = (typeof ingestionTypeEnum.enumValues)[number];
 type LengthRange = (typeof lengthEnum.enumValues)[number];
 type BlobsCount = (typeof blobsEnum.enumValues)[number];
+
+/**
+ * Comparison of a quote from the article and a quote from a source
+ */
+interface RipQuoteComparison {
+  /** Quote from the article */
+  articleQuote: string;
+  /** Quote from the source */
+  sourceQuote: string;
+  /** Number of the source */
+  sourceNumber: number;
+  /** Analysis of the rip */
+  ripAnalysis: string;
+}
 
 // ===================================================
 // Source Types
@@ -69,4 +82,4 @@ interface RequestMetadata {
 // Public API
 /* ==========================================================================*/
 
-export type { DraftType, LengthRange, BlobsCount, SourceOriginType, Source, SourceFlags, RequestMetadata };
+export type { DraftType, LengthRange, BlobsCount, SourceOriginType, Source, SourceFlags, RequestMetadata, RipQuoteComparison };

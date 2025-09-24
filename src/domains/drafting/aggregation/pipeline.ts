@@ -21,9 +21,11 @@ import { draftArticle } from "./steps/05-draft-article";
 import { reviseArticle } from "./steps/06-revise-article";
 import { addSourceAttribution } from "./steps/07-source-attribution";
 import { applyColorCoding } from "./steps/08-apply-color-coding";
+// import { detectRips } from "./steps/09-detect-rips";
 import { getStepConfig, stepName } from "./steps.config";
-import { getArticleAsPipelineRequest, createRunSkeleton, updateArticleStatus, updateRun } from "../common/operations";
-import type { Source } from "../common/types/_primitives";
+import { getArticleAsPipelineRequest, createRunSkeleton, updateArticleStatus, updateArticleStatusAndUsage, getCurrentUsageAndCost, finalizeDraft } from "../common/operations";
+import { createVerboseLogger } from "../common/utils";
+import type { Source } from "../common/types/primitives";
 import type { SourceFactsResult, SourceFactsConditionalResult } from "./steps/02-extract-facts-conditional/types";
 
 /* ==========================================================================*/
@@ -41,19 +43,36 @@ export default inngest.createFunction(
     id: "run-drafting-aggregation",
     onFailure: async ({ event }) => {
       // Mark article as failed when pipeline exhausts all retries
-      // IMPORTANT: event.data.event.data.metadata.articleId is the articleId, different from event.data.metadata.articleId
-      const articleId = event.data.event.data.metadata.articleId;
+      // IMPORTANT: event.data.event.data.request.articleId is the articleId, different from event.data.request.articleId
+      const articleId = event.data.event.data.request.articleId;
+
+      // Get accumulated usage before marking as failed
+      const currentUsage = await getCurrentUsageAndCost(articleId);
+
+      // Mark article as failed
       await updateArticleStatus(articleId, "failed");
+
+      return {
+        success: false,
+        totalTokenUsage: currentUsage.totalTokenUsage,
+        totalCostUsd: currentUsage.totalCostUsd,
+      };
     },
   },
   // Trigger
   { event: "drafting/trigger/aggregation" },
   // Handler
-  async ({ event, step }) => {
+  async ({ event, step, logger, runId }) => {
     // 1️⃣ Extract metadata from event -----
-    const { articleId, userId, draftType, lengthRange } = event.data.metadata;
+    const { articleId, userId, draftType, lengthRange } = event.data.request;
 
-    // 2️⃣ Run pipeline request and skeleton run in parallel -----
+    // 2️⃣ Create verbose logger -----
+    const verboseLogger = createVerboseLogger(logger, event.data.verbose, runId);
+
+    // Log initial request once
+    verboseLogger.logInitialRequest(event.data.request);
+
+    // 3️⃣ Run pipeline request and skeleton run in parallel -----
     const getPipelineRequest = step.run("get-pipeline-request", async () => {
       return await getArticleAsPipelineRequest(articleId);
     });
@@ -68,7 +87,7 @@ export default inngest.createFunction(
     });
 
     // Wait for both steps to complete in parallel
-    const [pipelineRequest, run] = await Promise.all([getPipelineRequest, initializeRun]);
+    const [pipelineRequest] = await Promise.all([getPipelineRequest, initializeRun]);
 
     // 3️⃣ Validate sources for aggregation -----
     if (!pipelineRequest.sources || pipelineRequest.sources.length === 0) {
@@ -88,84 +107,76 @@ export default inngest.createFunction(
 
     // 5️⃣ Extract facts from all sources in parallel -----
     let stepName: stepName = "01-extract-facts";
-    const extractedFactsResults = await step.run(stepName, async () => {
-      // 1️⃣ Create parallel step execution for each source -----
-      const parallelExtractions = pipelineRequest.sources.map((source: Source, index: number) => 
-        step.run(`extract-facts-source-${source.number}`, async () => {
-          // Build single-source request for this source
-          const singleSourceRequest = {
-            ...baseStepRequest,
-            sources: [source], // Single source per parallel execution
-            context: {},
-          };
-          
-          const result = await extractFacts(singleSourceRequest, getStepConfig(stepName));
-          
-          return {
-            sourceNumber: source.number,
-            extractedFacts: result.output.extractedFacts,
-            usage: result.usage,
-          } as SourceFactsResult;
-        })
-      );
 
-      // 2️⃣ Wait for all parallel extractions to complete -----
-      const results = await Promise.all(parallelExtractions);
-      
-      // 3️⃣ Aggregate usage data -----
-      const totalUsage = results.flatMap((result: SourceFactsResult) => result.usage);
-      
-      return {
-        extractedFactsResults: results,
-        totalUsage,
-      };
-    });
+    // Create parallel step execution for each source (not nested)
+    const parallelExtractions = pipelineRequest.sources.map((source: Source) =>
+      step.run(`extract-facts-source-${source.number}`, async () => {
+        // Build single-source request for this source
+        const singleSourceRequest = {
+          ...baseStepRequest,
+          sources: [source], // Single source per parallel execution
+          context: {},
+        };
 
-    // Update status after step 1
-    await step.run("update-status-10", async () => {
-      return await updateArticleStatus(articleId, "10%");
+        const result = await extractFacts(singleSourceRequest, getStepConfig(stepName), verboseLogger);
+
+        return {
+          sourceNumber: source.number,
+          extractedFacts: result.output.extractedFacts,
+          usage: result.usage,
+        } as SourceFactsResult;
+      })
+    );
+
+    // Wait for all parallel extractions to complete
+    const extractedFactsResults = {
+      extractedFactsResults: await Promise.all(parallelExtractions),
+      get totalUsage() {
+        return this.extractedFactsResults.flatMap((result: SourceFactsResult) => result.usage);
+      },
+    };
+
+    // Update status and accumulate usage after step 1
+    await step.run("update-status-usage-10", async () => {
+      return await updateArticleStatusAndUsage(articleId, "10%", extractedFactsResults.totalUsage);
     });
 
     // 6️⃣ Extract facts conditional from all sources in parallel -----
     stepName = "02-extract-facts-conditional";
-    const extractedFactsConditional = await step.run(stepName, async () => {
-      // 1️⃣ Create parallel step execution for each source -----
-      const parallelConditionalExtractions = pipelineRequest.sources.map((source: Source, index: number) => 
-        step.run(`extract-facts-conditional-source-${source.number}`, async () => {
-          // Build single-source request with step 01 results as context
-          const singleSourceRequest = {
-            ...baseStepRequest,
-            sources: [source], // Single source per parallel execution
-            context: {
-              extractedFactsResults: extractedFactsResults.extractedFactsResults as SourceFactsResult[],
-            },
-          };
-          
-          const result = await extractFactsConditional(singleSourceRequest, getStepConfig(stepName));
-          
-          return {
-            sourceNumber: source.number,
-            factsBitSplitting2: result.output.factsBitSplitting2,
-            usage: result.usage,
-          } as SourceFactsConditionalResult;
-        })
-      );
 
-      // 2️⃣ Wait for all parallel conditional extractions to complete -----
-      const results = await Promise.all(parallelConditionalExtractions);
-      
-      // 3️⃣ Aggregate usage data -----
-      const totalUsage = results.flatMap((result: SourceFactsConditionalResult) => result.usage);
-      
-      return {
-        extractedFactsConditionalResults: results,
-        totalUsage,
-      };
-    });
+    // Create parallel step execution for each source (not nested)
+    const parallelConditionalExtractions = pipelineRequest.sources.map((source: Source) =>
+      step.run(`extract-facts-conditional-source-${source.number}`, async () => {
+        // Build single-source request with step 01 results as context
+        const singleSourceRequest = {
+          ...baseStepRequest,
+          sources: [source], // Single source per parallel execution
+          context: {
+            extractedFactsResults: extractedFactsResults.extractedFactsResults as SourceFactsResult[],
+          },
+        };
 
-    // Update status after step 2
-    await step.run("update-status-20", async () => {
-      return await updateArticleStatus(articleId, "20%");
+        const result = await extractFactsConditional(singleSourceRequest, getStepConfig(stepName), verboseLogger);
+
+        return {
+          sourceNumber: source.number,
+          factsBitSplitting2: result.output.factsBitSplitting2,
+          usage: result.usage,
+        } as SourceFactsConditionalResult;
+      })
+    );
+
+    // Wait for all parallel conditional extractions to complete
+    const extractedFactsConditional = {
+      extractedFactsConditionalResults: await Promise.all(parallelConditionalExtractions),
+      get totalUsage() {
+        return this.extractedFactsConditionalResults.flatMap((result: SourceFactsConditionalResult) => result.usage);
+      },
+    };
+
+    // Update status and accumulate usage after step 2
+    await step.run("update-status-usage-20", async () => {
+      return await updateArticleStatusAndUsage(articleId, "20%", extractedFactsConditional.totalUsage);
     });
 
     // 7️⃣ Generate headlines (sequential, uses all source results) -----
@@ -179,12 +190,12 @@ export default inngest.createFunction(
           extractedFactsConditionalResults: extractedFactsConditional.extractedFactsConditionalResults as SourceFactsConditionalResult[],
         },
       };
-      return await generateHeadlines(request, getStepConfig(stepName));
+      return await generateHeadlines(request, getStepConfig(stepName), verboseLogger);
     });
 
-    // Update status after step 3
-    await step.run("update-status-30", async () => {
-      return await updateArticleStatus(articleId, "30%");
+    // Update status and accumulate usage after step 3
+    await step.run("update-status-usage-30", async () => {
+      return await updateArticleStatusAndUsage(articleId, "30%", generatedHeadlines.usage);
     });
 
     // 8️⃣ Create outline (sequential, uses all source results) -----
@@ -200,12 +211,12 @@ export default inngest.createFunction(
           generatedBlobs: generatedHeadlines.output.generatedBlobs,
         },
       };
-      return await createOutline(request, getStepConfig(stepName));
+      return await createOutline(request, getStepConfig(stepName), verboseLogger);
     });
 
-    // Update status after step 4
-    await step.run("update-status-40", async () => {
-      return await updateArticleStatus(articleId, "40%");
+    // Update status and accumulate usage after step 4
+    await step.run("update-status-usage-40", async () => {
+      return await updateArticleStatusAndUsage(articleId, "40%", createdOutline.usage);
     });
 
     // 9️⃣ Draft article (sequential, uses all source results) -----
@@ -222,12 +233,12 @@ export default inngest.createFunction(
           createdOutline: createdOutline.output.createdOutline,
         },
       };
-      return await draftArticle(request, getStepConfig(stepName));
+      return await draftArticle(request, getStepConfig(stepName), verboseLogger);
     });
 
-    // Update status after step 5
-    await step.run("update-status-70", async () => {
-      return await updateArticleStatus(articleId, "70%");
+    // Update status and accumulate usage after step 5
+    await step.run("update-status-usage-60", async () => {
+      return await updateArticleStatusAndUsage(articleId, "60%", draftedArticle.usage);
     });
 
     // 🔟 Revise article (sequential) -----
@@ -240,12 +251,12 @@ export default inngest.createFunction(
           draftedArticle: draftedArticle.output.draftedArticle,
         },
       };
-      return await reviseArticle(request, getStepConfig(stepName));
+      return await reviseArticle(request, getStepConfig(stepName), verboseLogger);
     });
 
-    // Update status after step 6
-    await step.run("update-status-80", async () => {
-      return await updateArticleStatus(articleId, "80%");
+    // Update status and accumulate usage after step 6
+    await step.run("update-status-usage-70", async () => {
+      return await updateArticleStatusAndUsage(articleId, "70%", revisedArticle.usage);
     });
 
     // 1️⃣1️⃣ Add source attribution (sequential) -----
@@ -258,15 +269,15 @@ export default inngest.createFunction(
           revisedArticle: revisedArticle.output.revisedArticle,
         },
       };
-      return await addSourceAttribution(request, getStepConfig(stepName));
+      return await addSourceAttribution(request, getStepConfig(stepName), verboseLogger);
     });
 
-    // Update status after step 7
-    await step.run("update-status-90", async () => {
-      return await updateArticleStatus(articleId, "90%");
+    // Update status and accumulate usage after step 7
+    await step.run("update-status-usage-90", async () => {
+      return await updateArticleStatusAndUsage(articleId, "90%", attributedArticle.usage);
     });
 
-    // 1️⃣2️⃣ Apply color coding (sequential, final step) -----
+    // 1️⃣2️⃣ Apply color coding (sequential) -----
     stepName = "08-apply-color-coding";
     const colorCodedArticle = await step.run(stepName, async () => {
       const request = {
@@ -276,52 +287,87 @@ export default inngest.createFunction(
           attributedArticle: attributedArticle.output.attributedArticle,
         },
       };
-      return await applyColorCoding(request, getStepConfig(stepName));
+      return await applyColorCoding(request, getStepConfig(stepName), verboseLogger);
     });
 
-    // Final status update to completed
-    await step.run("update-status-completed", async () => {
-      return await updateArticleStatus(articleId, "completed");
-    });
+    // Update status and accumulate usage after step 8
+    // TODO: add back when we reimplement the rip step
+    // await step.run("update-status-usage-90", async () => {
+    //   return await updateArticleStatusAndUsage(articleId, "90%", colorCodedArticle.usage);
+    // });
 
-    // Finalize run with aggregated usage data
-    await step.run("finalize-run", async () => {
-      // 1️⃣ Aggregate all token usage from all steps -----
-      const allUsage = [
-        ...extractedFactsResults.totalUsage,
-        ...extractedFactsConditional.totalUsage,
-        ...generatedHeadlines.usage,
-        ...createdOutline.usage,
-        ...draftedArticle.usage,
-        ...revisedArticle.usage,
-        ...attributedArticle.usage,
-        ...colorCodedArticle.usage,
-      ];
+    // 1️⃣3️⃣ Detect rips (sequential, final step) -----
+    // stepName = "09-detect-rips";
+    // const ripAnalysis = await step.run(stepName, async () => {
+    //   const request = {
+    //     ...baseStepRequest,
+    //     sources: pipelineRequest.sources,
+    //     context: {
+    //       colorCodedArticle: colorCodedArticle.output.richContent,
+    //     },
+    //   };
+    //   return await detectRips(request, getStepConfig(stepName), verboseLogger);
+    // });
 
-      const totalInputTokens = allUsage.reduce((sum, usage) => sum + usage.inputTokens, 0);
-      const totalOutputTokens = allUsage.reduce((sum, usage) => sum + usage.outputTokens, 0);
+    // TODO: Remove when we reimplement the step
+    const ripAnalysis = {
+      output: {
+        overallRipScore: 0,
+        overallRipAnalysis: "",
+        ripComparisons: [],
+      },
+    };
 
-      // 2️⃣ Update run with final usage data -----
-      return await updateRun({
-        id: run.id,
-        inputTokens: totalInputTokens,
-        outputTokens: totalOutputTokens,
-        // TODO: Calculate cost based on model usage and pricing
-        costUsd: "0.00", // Placeholder for cost calculation
+    const formattedBlobs = generatedHeadlines.output.generatedBlobs.join("\n");
+
+    // Final step: finalize draft
+    const finalizedDraft = await step.run("finalize-draft", async () => {
+      return await finalizeDraft(articleId, userId, {
+        draftType: draftType,
+        headline: generatedHeadlines.output.generatedHeadline,
+        blob: formattedBlobs,
+        content: colorCodedArticle.output.content,
+        richContent: colorCodedArticle.output.richContent,
+        userSpecifiedHeadline: pipelineRequest.userSpecifiedHeadline,
+        ripScore: ripAnalysis.output.overallRipScore,
+        ripAnalysis: ripAnalysis.output.overallRipAnalysis,
+        ripComparisons: ripAnalysis.output.ripComparisons,
       });
     });
 
+    // Final step: accumulate final usage and mark completed
+    const finalResult = await step.run("finalize-completed", async () => {
+      return await updateArticleStatusAndUsage(articleId, "completed", colorCodedArticle.usage);
+    });
+
+    // Send completion email
+    await step.run("send-completion-email", async () => {
+      const emailPayload = {
+        to: [finalizedDraft.userInfo.email],
+        subject: `Article Complete: ${generatedHeadlines.output.generatedHeadline} version ${finalizedDraft.article.version}`,
+        articleHref: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/article?slug=${finalizedDraft.article.slug}&version=${finalizedDraft.article.version}`,
+        name: finalizedDraft.userInfo.firstName || "there",
+        slug: finalizedDraft.article.slug,
+        version: finalizedDraft.article.version,
+      };
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/drafting/send-completion-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(emailPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to send completion email: ${response.statusText}`);
+      }
+
+      return await response.json();
+    });
+
     return {
-      pipelineRequest,
-      run,
-      extractedFactsResults: extractedFactsResults.extractedFactsResults,
-      extractedFactsConditional: extractedFactsConditional.extractedFactsConditionalResults,
-      generatedHeadlines,
-      createdOutline,
-      draftedArticle,
-      revisedArticle,
-      attributedArticle,
-      colorCodedArticle,
+      success: true,
+      totalTokenUsage: finalResult.totalTokenUsage,
+      totalCostUsd: finalResult.totalCostUsd,
     };
   }
 );

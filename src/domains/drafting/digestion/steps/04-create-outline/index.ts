@@ -17,6 +17,7 @@ import { simpleGenerateText } from "@/core/ai/call/generateText";
 import { createSuccessResponse, formatHeadlinesBlobs } from "@/domains/drafting/common/utils";
 import type { CreateOutlineRequest, CreateOutlineResponse } from "./types";
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
 // Implementation
@@ -25,7 +26,7 @@ import type { StepConfig } from "@/domains/drafting/common/types/runner";
 /**
  * Create structural outline for the article with comprehensive key points.
  */
-async function createOutline(request: CreateOutlineRequest, stepConfig: StepConfig): Promise<CreateOutlineResponse> {
+async function createOutline(request: CreateOutlineRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<CreateOutlineResponse> {
   // 1️⃣ Prepare template variables ----
   const systemTemplateVariables = {
     extractedFactsSummary: request.context.extractedFactsSummary,
@@ -49,7 +50,14 @@ async function createOutline(request: CreateOutlineRequest, stepConfig: StepConf
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
   const formattedAssistant = formatPrompt(prompts.assistantTemplate, undefined, PromptType.ASSISTANT);
 
-  // 4️⃣ Generate AI response ----
+  // 4️⃣ Log final prompts before AI call ----
+  verboseLogger?.logStepPrompts(stepConfig.stepName, {
+    system: formattedSystem,
+    user: formattedUser,
+    assistant: formattedAssistant
+  });
+
+  // 5️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
     model: stepConfig.model,
     systemPrompt: formattedSystem,
@@ -59,8 +67,13 @@ async function createOutline(request: CreateOutlineRequest, stepConfig: StepConf
     maxTokens: stepConfig.maxTokens,
   });
 
-  // 5️⃣ Structure response with usage tracking ----
-  return createSuccessResponse({ createdOutline: aiResult.text }, stepConfig.model, aiResult.usage);
+  // 6️⃣ Structure response with usage tracking ----
+  const response = createSuccessResponse({ createdOutline: aiResult.text }, stepConfig.model, aiResult.usage);
+  
+  // 7️⃣ Log step output ----
+  verboseLogger?.logStepOutput(stepConfig.stepName, response.output);
+  
+  return response;
 }
 
 /* ==========================================================================*/

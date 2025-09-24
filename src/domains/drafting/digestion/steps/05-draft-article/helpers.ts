@@ -9,7 +9,7 @@
 /* ==========================================================================*/
 
 // Internal Modules ----
-import type { LengthRange } from "@/domains/drafting/common/types/_primitives";
+import type { LengthRange } from "@/domains/drafting/common/types/primitives";
 
 /* ==========================================================================*/
 // Constants

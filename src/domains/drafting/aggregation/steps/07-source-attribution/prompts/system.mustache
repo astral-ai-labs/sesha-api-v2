@@ -13,8 +13,8 @@ NOTES:
 - Don't add new credits for anything from editor notes
 - Dont add new credits for anything that is marked with a source number but no credit, for example, (Source 1) should not be credited since it doesn't have a credit like "CNN" inside the tag
 - Make sure to keep all existing instances of in-sentence attribution
-{{#sources.0.useVerbatim}}This opening text should remain unaltered, since it was already manually written by the editor: 
-{{sources.0.factsBitSplitting1}}{{/sources.0.useVerbatim}}
+{{#sources.0.flags.copySourceVerbatim}}This opening text should remain unaltered, since it was already manually written by the editor: 
+{{sources.0.factsBitSplitting1}}{{/sources.0.flags.copySourceVerbatim}}
 
 NOTE: If there are multiple sources in the tags, use the first source listed in the tag. For example, if provided "Blah blah blah (Source 1 CNN, Source 3 NumeNews)" you would add credit as "Blah blah blah, according to CNN. (Source 1 CNN, Source 3 NumeNews)" since that is the first source listed in the source tag. But remember, if the source doesn't have a credit and only has a number it should not be credited.
 

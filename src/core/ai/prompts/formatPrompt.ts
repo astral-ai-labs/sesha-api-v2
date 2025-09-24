@@ -11,6 +11,8 @@
 
 // External Packages ---
 import Mustache from "mustache";
+import { NonRetriableError } from "inngest";
+
 
 // Internal Modules ----
 import { PromptType } from "./types";
@@ -31,7 +33,7 @@ function formatPrompt(promptTemplate?: string, variables?: Record<string, unknow
   try {
     return Mustache.render(promptTemplate, variables);
   } catch (error: unknown) {
-    throw new Error(`Prompt formatting failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new NonRetriableError(`Prompt formatting failed for ${type}`, { cause: error instanceof Error ? error : new Error(String(error)) });
   }
 }
 

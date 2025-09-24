@@ -17,8 +17,10 @@ import { createOutline } from "./steps/04-create-outline";
 import { draftArticle } from "./steps/05-draft-article";
 import { reviseArticle } from "./steps/06-revise-article";
 import { addSourceAttribution } from "./steps/07-add-source-attribution";
+import { digestVerbatimConditional } from "./steps/04-digest-verbatim-conditional";
 import { getStepConfig, stepName } from "./steps.config";
-import { getArticleAsPipelineRequest, createRunSkeleton, updateArticleStatus, updateRun } from "../common/operations";
+import { getArticleAsPipelineRequest, createRunSkeleton, updateArticleStatus, updateArticleStatusAndUsage, getCurrentUsageAndCost, finalizeDraft } from "../common/operations";
+import { createVerboseLogger } from "../common/utils";
 
 /* ==========================================================================*/
 // Pipeline Implementation
@@ -34,19 +36,36 @@ export default inngest.createFunction(
     id: "run-drafting-digestion",
     onFailure: async ({ event }) => {
       // Mark article as failed when pipeline exhausts all retries
-      // IMPORTANT: event.data.event.data.metadata.articleId is the articleId, different from event.data.metadata.articleId
-      const articleId = event.data.event.data.metadata.articleId;
+      // IMPORTANT: event.data.event.data.request.articleId is the articleId, different from event.data.request.articleId
+      const articleId = event.data.event.data.request.articleId;
+
+      // Get accumulated usage before marking as failed
+      const currentUsage = await getCurrentUsageAndCost(articleId);
+
+      // Mark article as failed
       await updateArticleStatus(articleId, "failed");
+
+      return {
+        success: false,
+        totalTokenUsage: currentUsage.totalTokenUsage,
+        totalCostUsd: currentUsage.totalCostUsd,
+      };
     },
   },
   // Trigger
   { event: "drafting/trigger/digestion" },
   // Handler
-  async ({ event, step }) => {
+  async ({ event, step, logger, runId }) => {
     // 1️⃣ Extract metadata from event -----
-    const { articleId, userId, draftType, lengthRange } = event.data.metadata;
+    const { articleId, userId, draftType, lengthRange } = event.data.request;
 
-    // 2️⃣ Run pipeline request and skeleton run in parallel -----
+    // 2️⃣ Create verbose logger -----
+    const verboseLogger = createVerboseLogger(logger, event.data.verbose, runId);
+
+    // Log initial request once
+    verboseLogger.logInitialRequest(event.data.request);
+
+    // 3️⃣ Run pipeline request and skeleton run in parallel -----
     const getPipelineRequest = step.run("get-pipeline-request", async () => {
       return await getArticleAsPipelineRequest(articleId);
     });
@@ -61,9 +80,16 @@ export default inngest.createFunction(
     });
 
     // Wait for both steps to complete in parallel
-    const [pipelineRequest, run] = await Promise.all([getPipelineRequest, initializeRun]);
+    const [pipelineRequest] = await Promise.all([getPipelineRequest, initializeRun]);
 
-    // 3️⃣ Update status to started -----
+    // 4️⃣ Check for verbatim mode -----
+    const isVerbatim = pipelineRequest.sources.some((source) => source.flags.copySourceVerbatim);
+
+    if (isVerbatim && event.data.verbose) {
+      console.log("verbatim mode detected - Using shortened 4-step pipeline flow");
+    }
+
+    // 5️⃣ Update status to started -----
     await step.run("update-status-started", async () => {
       return await updateArticleStatus(articleId, "started");
     });
@@ -75,7 +101,7 @@ export default inngest.createFunction(
       lengthRange: pipelineRequest.lengthRange,
     };
 
-    // 4️⃣ Extract facts from sources -----
+    // 6️⃣ Extract facts from sources -----
     let stepName: stepName = "01-extract-facts";
     const extractedFacts = await step.run(stepName, async () => {
       // Build step request from pipeline data
@@ -84,12 +110,13 @@ export default inngest.createFunction(
         context: {},
       };
 
-      return await extractFacts(extractFactsRequest, getStepConfig(stepName));
+      return await extractFacts(extractFactsRequest, getStepConfig(stepName), verboseLogger);
     });
 
-    // Update status after step 1
-    await step.run("update-status-10", async () => {
-      return await updateArticleStatus(articleId, "10%");
+    // Update status and accumulate usage after step 1
+    await step.run("update-status-usage-step-1", async () => {
+      const progressPercent = isVerbatim ? "30%" : "10%";
+      return await updateArticleStatusAndUsage(articleId, progressPercent, extractedFacts.usage);
     });
 
     // 5️⃣ Summarize extracted facts -----
@@ -103,12 +130,12 @@ export default inngest.createFunction(
         },
       };
 
-      return await summarizeFacts(summarizeFactsRequest, getStepConfig(stepName));
+      return await summarizeFacts(summarizeFactsRequest, getStepConfig(stepName), verboseLogger);
     });
 
-    // Update status after step 2
-    await step.run("update-status-20", async () => {
-      return await updateArticleStatus(articleId, "20%");
+    // Update status and accumulate usage after step 2
+    await step.run("update-status-usage-step-2", async () => {
+      return await updateArticleStatusAndUsage(articleId, isVerbatim ? "60%" : "20%", summarizedFacts.usage);
     });
 
     // 6️⃣ Generate headlines -----
@@ -121,15 +148,78 @@ export default inngest.createFunction(
           extractedFactsSummary: summarizedFacts.output.extractedFactsSummary,
         },
       };
-      return await generateHeadlines(generatedHeadlinesRequest, getStepConfig(stepName));
+      return await generateHeadlines(generatedHeadlinesRequest, getStepConfig(stepName), verboseLogger);
     });
 
-    // Update status after step 3
-    await step.run("update-status-30", async () => {
-      return await updateArticleStatus(articleId, "30%");
+    // Update status and accumulate usage after step 3
+    await step.run("update-status-usage-step-3", async () => {
+      return await updateArticleStatusAndUsage(articleId, isVerbatim ? "80%" : "30%", generatedHeadlines.usage);
     });
 
-    // 7️⃣ Create article outline -----
+    // 7️⃣ Handle verbatim flow -----
+    if (isVerbatim) {
+      // VERBATIM FLOW: Skip remaining steps and use verbatim processing
+      stepName = "04-digest-verbatim-conditional";
+      const verbatimResult = await step.run(stepName, async () => {
+        const verbatimRequest = {
+          ...baseStepRequest,
+          context: {},
+        };
+        return await digestVerbatimConditional(verbatimRequest, getStepConfig(stepName), verboseLogger);
+      });
+
+      const formattedBlobsVerbatim = generatedHeadlines.output.generatedBlobs.join("\n");
+
+      // Final step: finalize draft for verbatim
+      const finalizedDraftVerbatim = await step.run("finalize-draft-verbatim", async () => {
+        return await finalizeDraft(articleId, userId, {
+          draftType: draftType,
+          headline: generatedHeadlines.output.generatedHeadline,
+          blob: formattedBlobsVerbatim,
+          content: verbatimResult.output.digestedVerbatim,
+          userSpecifiedHeadline: pipelineRequest.userSpecifiedHeadline,
+        });
+      });
+
+      // Final step: accumulate verbatim usage and mark completed
+      const finalResult = await step.run("finalize-verbatim-completed", async () => {
+        return await updateArticleStatusAndUsage(articleId, "completed", verbatimResult.usage);
+      });
+
+      // Send completion email
+      await step.run("send-completion-email-verbatim", async () => {
+        const emailPayload = {
+          to: [finalizedDraftVerbatim.userInfo.email],
+          subject: `Article Complete: ${generatedHeadlines.output.generatedHeadline} version ${finalizedDraftVerbatim.article.version}`,
+          articleHref: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/article?slug=${finalizedDraftVerbatim.article.slug}&version=${finalizedDraftVerbatim.article.version}`,
+          name: finalizedDraftVerbatim.userInfo.firstName || "there",
+          slug: finalizedDraftVerbatim.article.slug,
+          version: finalizedDraftVerbatim.article.version,
+        };
+
+        const response = await fetch("/api/drafting/send-completion-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(emailPayload),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to send completion email: ${response.statusText}`);
+        }
+
+        return await response.json();
+      });
+
+      // Verbose logs are automatically handled by Inngest logger
+
+      return {
+        success: true,
+        totalTokenUsage: finalResult.totalTokenUsage,
+        totalCostUsd: finalResult.totalCostUsd,
+      };
+    }
+
+    // 8️⃣ Create article outline (normal flow) -----
     stepName = "04-create-outline";
     const createdOutline = await step.run(stepName, async () => {
       const createOutlineRequest = {
@@ -141,12 +231,12 @@ export default inngest.createFunction(
           generatedBlobs: generatedHeadlines.output.generatedBlobs,
         },
       };
-      return await createOutline(createOutlineRequest, getStepConfig(stepName));
+      return await createOutline(createOutlineRequest, getStepConfig(stepName), verboseLogger);
     });
 
-    // Update status after step 4
-    await step.run("update-status-40", async () => {
-      return await updateArticleStatus(articleId, "40%");
+    // Update status and accumulate usage after step 4
+    await step.run("update-status-usage-40", async () => {
+      return await updateArticleStatusAndUsage(articleId, "40%", createdOutline.usage);
     });
 
     // 8️⃣ Draft article -----
@@ -162,12 +252,12 @@ export default inngest.createFunction(
           createdOutline: createdOutline.output.createdOutline,
         },
       };
-      return await draftArticle(draftArticleRequest, getStepConfig(stepName));
+      return await draftArticle(draftArticleRequest, getStepConfig(stepName), verboseLogger);
     });
 
-    // Update status after step 5
-    await step.run("update-status-70", async () => {
-      return await updateArticleStatus(articleId, "70%");
+    // Update status and accumulate usage after major step (drafting)
+    await step.run("update-status-usage-70", async () => {
+      return await updateArticleStatusAndUsage(articleId, "70%", draftedArticle.usage);
     });
 
     // 9️⃣ Revise article -----
@@ -179,12 +269,12 @@ export default inngest.createFunction(
           draftedArticle: draftedArticle.output.draftedArticle,
         },
       };
-      return await reviseArticle(reviseArticleRequest, getStepConfig(stepName));
+      return await reviseArticle(reviseArticleRequest, getStepConfig(stepName), verboseLogger);
     });
 
-    // Update status after step 6
-    await step.run("update-status-90", async () => {
-      return await updateArticleStatus(articleId, "90%");
+    // Update status and accumulate usage after step 6
+    await step.run("update-status-usage-90", async () => {
+      return await updateArticleStatusAndUsage(articleId, "90%", revisedArticle.usage);
     });
 
     // 🔟 Add source attribution -----
@@ -196,50 +286,57 @@ export default inngest.createFunction(
           revisedArticle: revisedArticle.output.revisedArticle,
         },
       };
-      return await addSourceAttribution(addSourceAttributionRequest, getStepConfig(stepName));
+      return await addSourceAttribution(addSourceAttributionRequest, getStepConfig(stepName), verboseLogger);
     });
 
-    // Final status update to completed
-    await step.run("update-status-completed", async () => {
-      return await updateArticleStatus(articleId, "completed");
-    });
+    const formattedBlobs = generatedHeadlines.output.generatedBlobs.join("\n");
 
-    // Finalize run with aggregated usage data
-    await step.run("finalize-run", async () => {
-      // 1️⃣ Aggregate all token usage -----
-      const allUsage = [
-        ...extractedFacts.usage,
-        ...summarizedFacts.usage,
-        ...generatedHeadlines.usage,
-        ...createdOutline.usage,
-        ...draftedArticle.usage,
-        ...revisedArticle.usage,
-        ...attributedArticle.usage,
-      ];
-
-      const totalInputTokens = allUsage.reduce((sum, usage) => sum + usage.inputTokens, 0);
-      const totalOutputTokens = allUsage.reduce((sum, usage) => sum + usage.outputTokens, 0);
-
-      // 2️⃣ Update run with final usage data -----
-      return await updateRun({
-        id: run.id,
-        inputTokens: totalInputTokens,
-        outputTokens: totalOutputTokens,
-        // TODO: Calculate cost based on model usage and pricing
-        costUsd: "0.00", // Placeholder for cost calculation
+    // Final step: finalize draft
+    const finalizedDraft = await step.run("finalize-draft", async () => {
+      return await finalizeDraft(articleId, userId, {
+        draftType: draftType,
+        headline: generatedHeadlines.output.generatedHeadline,
+        blob: formattedBlobs,
+        content: attributedArticle.output.attributedArticle,
+        userSpecifiedHeadline: pipelineRequest.userSpecifiedHeadline,
       });
     });
 
+    // Final step: accumulate final usage and mark completed
+    const finalResult = await step.run("finalize-completed", async () => {
+      return await updateArticleStatusAndUsage(articleId, "completed", attributedArticle.usage);
+    });
+
+    // Send completion email
+    await step.run("send-completion-email", async () => {
+      const emailPayload = {
+        to: [finalizedDraft.userInfo.email],
+        subject: `Article Complete: ${generatedHeadlines.output.generatedHeadline} version ${finalizedDraft.article.version}`,
+        articleHref: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/article?slug=${finalizedDraft.article.slug}&version=${finalizedDraft.article.version}`,
+        name: finalizedDraft.userInfo.firstName || "there",
+        slug: finalizedDraft.article.slug,
+        version: finalizedDraft.article.version,
+      };
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/drafting/send-completion-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(emailPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to send completion email: ${response.statusText}`);
+      }
+
+      return await response.json();
+    });
+
+    // Verbose logs are automatically handled by Inngest logger
+
     return {
-      pipelineRequest,
-      run,
-      extractedFacts,
-      summarizedFacts,
-      generatedHeadlines,
-      createdOutline,
-      draftedArticle,
-      revisedArticle,
-      attributedArticle,
+      success: true,
+      totalTokenUsage: finalResult.totalTokenUsage,
+      totalCostUsd: finalResult.totalCostUsd,
     };
   }
 );

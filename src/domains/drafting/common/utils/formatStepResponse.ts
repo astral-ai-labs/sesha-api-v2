@@ -17,7 +17,7 @@ import type { LLMTokenUsage } from "@/core/usage/types";
  */
 export function createSuccessResponse<TOutput>(output: TOutput, model: string, usage: { inputTokens: number; outputTokens: number; totalTokens: number }): StepResponse<TOutput> {
   const tokenUsage: LLMTokenUsage = {
-    model,
+    model: model,
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
     totalTokens: usage.totalTokens,

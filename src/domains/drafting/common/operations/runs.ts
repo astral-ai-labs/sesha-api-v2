@@ -14,6 +14,7 @@ import { eq } from "drizzle-orm";
 // Internal Modules ----
 import { db, runs } from "@/core/db";
 import { ingestionTypeEnum, lengthEnum } from "@/core/db/schema";
+import type { LLMTokenUsage } from "@/core/usage/types";
 
 /* ==========================================================================*/
 // Types & Interfaces
@@ -92,12 +93,36 @@ async function updateRun(params: UpdateRunParams) {
   return run;
 }
 
+/**
+ * Finalizes run with accumulated usage data from pipeline steps.
+ */
+async function finalizeRunWithUsage(runId: string, usage: LLMTokenUsage[]) {
+  // 1️⃣ Validate input -----
+  if (!runId?.trim()) {
+    throw new Error("Run ID cannot be empty");
+  }
+
+  // 2️⃣ Aggregate usage data -----
+  const totalInputTokens = usage.reduce((sum, u) => sum + u.inputTokens, 0);
+  const totalOutputTokens = usage.reduce((sum, u) => sum + u.outputTokens, 0);
+
+  // 3️⃣ Update run with final usage data -----
+  return await updateRun({
+    id: runId,
+    inputTokens: totalInputTokens,
+    outputTokens: totalOutputTokens,
+    // TODO: Calculate cost based on model usage and pricing
+    costUsd: "0.00", // Placeholder for cost calculation
+  });
+}
+
 /* ==========================================================================*/
 // Public API
 /* ==========================================================================*/
 export {
   createRunSkeleton,
   updateRun,
+  finalizeRunWithUsage,
   type CreateRunSkeletonParams,
   type UpdateRunParams,
 };

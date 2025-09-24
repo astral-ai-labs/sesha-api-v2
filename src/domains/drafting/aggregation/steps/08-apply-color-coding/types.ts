@@ -23,7 +23,7 @@ interface ApplyColorCodingContext {
  */
 interface ApplyColorCodingOutput {
   /** Final article with color coding applied */
-  colorCodedArticle: string;
+  content: string;
   /** Rich content formatting data */
   richContent: string;
 }

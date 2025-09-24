@@ -10,17 +10,23 @@
 /* ==========================================================================*/
 
 // Internal Modules ----
-import type { BlobsCount, LengthRange, RequestMetadata, Source } from "./_primitives";
+import type { BlobsCount, LengthRange, RequestMetadata, Source } from "./primitives";
 import type { LLMTokenUsage } from "@/core/usage/types";
+import type { stepName as AggregationStepName } from "../../aggregation/steps.config";
+import type { stepName as DigestionStepName } from "../../digestion/steps.config";
+import { articles } from "@/core/db";
 
 /* ==========================================================================*/
 // Step Types
 /* ==========================================================================*/
 
 interface StepConfig {
+  stepName: AggregationStepName | DigestionStepName;
   model: string;
   temperature: number;
   maxTokens: number;
+  structuredModel?: string;
+  temperatureStructured?: number;
 }
 
 /**
@@ -62,7 +68,19 @@ interface PipelineRequest {
   sources: Source[];
 }
 
+
+// ================================================================
+// Article Status and Usage Result
+// ================================================================
+
+interface ArticleStatusAndUsageResult {
+  article: typeof articles.$inferSelect;
+  totalTokenUsage: LLMTokenUsage;
+  totalCostUsd: string;
+}
+
+
 /* ==========================================================================*/
 // Public API
 /* ==========================================================================*/
-export type { StepConfig, StepRequest, StepResponse, PipelineRequest };
+export type { StepConfig, ArticleStatusAndUsageResult, StepRequest, StepResponse, PipelineRequest };

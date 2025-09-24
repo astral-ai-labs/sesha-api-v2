@@ -1,5 +1,5 @@
-{{^source.useVerbatim}}
-{{^source.isPrimarySource}}
+{{^source.flags.copySourceVerbatim}}
+{{^source.flags.isPrimarySource}}
 <role>
 You are an expert editor ingesting an article to split it up into a list of facts (in your own words) and direct quotes from people.
 </role>
@@ -69,9 +69,9 @@ Zangeneh said that Momeni will plead not guilty on August 15th at the next arrai
 Momeni is currently being held in custody. (Source 3 Reuters)
 His attorney has also said he will put forth a motion for another detention hearing. (Source 3 Reuters)
 </source-content>
-{{/source.isPrimarySource}}
+{{/source.flags.isPrimarySource}}
 
-{{#source.isPrimarySource}}
+{{#source.flags.isPrimarySource}}
 Instructions:
 Reprint the article content and add source tags after each sentence along with credits to the author. Remove extraneous content like "click here" and "for more, follow newsweek" etc. from the provided text. Only complete the FIRST HALF of the article.
 
@@ -136,10 +136,10 @@ Author: John Smith, edited by Staff Writers at Reuters
 By John Smith, edited by Staff Writers at Reuters (Source 3 Reuters)
 </second-half>
 </source-content>
-{{/source.isPrimarySource}}
-{{/source.useVerbatim}}
+{{/source.flags.isPrimarySource}}
+{{/source.flags.copySourceVerbatim}}
 
-{{#source.useVerbatim}}
+{{#source.flags.copySourceVerbatim}}
 Instructions:
 Reprint the editor-written opening word for word and add source tags after each sentence along with credits to the source. 
 
@@ -185,4 +185,4 @@ Lee, 43, later died of his wounds at a hospital. (Source 1)
 Nima Momeni, the 38-year-old founder of software company Expand IT, was arrested on suspicion of murder in the Bay Area city of Emeryvile, where his company has offices, San Francisco. (Source 1)
 Police Chief William Scott told a Monday afternoon news conference. (Source 1)
 "We are still investigating," said Scott, "but we are confident that we have the right suspect in custody." (Source 1)
-{{/source.useVerbatim}}
+{{/source.flags.copySourceVerbatim}}

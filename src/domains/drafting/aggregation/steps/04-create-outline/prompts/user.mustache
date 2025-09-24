@@ -5,7 +5,7 @@ You must weave together the sources and write each key point in your own words b
 
 Editor Notes:
 {{instructions}}
-Source 1 {{#sources.0.accredit}}{{sources.0.accredit}}{{/sources.0.accredit}} is most important and should determine the angle of the story
+Source 1 {{#sources.0.attribution}}{{sources.0.attribution}}{{/sources.0.attribution}} is most important and should determine the angle of the story
 Key point 1 MUST be the same angle as the headline
 
 Pull from each one of the source inputs and weave them together: {{keyPointInstructions}}
@@ -34,7 +34,7 @@ KEY POINTS IN ORDER:
 N: Cover/inlcude(insert next key point about the main story by weaving together the information from the source articles) (insert source tags)
 </outline>
 
-{{#sources.0.useVerbatim}}For the first few key points, indicate that the user must use the editor-provided opening verbatim. The next point must flow seamlessly from the editor-provided opening into the rest of the article{{/sources.0.useVerbatim}}
+{{#sources.0.flags.copySourceVerbatim}}For the first few key points, indicate that the user must use the editor-provided opening verbatim. The next point must flow seamlessly from the editor-provided opening into the rest of the article{{/sources.0.flags.copySourceVerbatim}}
 </instructions>
 
 Source Article Input List (craft the aggregated news article from these inputs):
@@ -42,15 +42,15 @@ Source Article Input List (craft the aggregated news article from these inputs):
 NOTE: Some of these articles may include different stories or events, so make sure that the key points are clear and accurate so that no stories are incorrectly "mixed up"
 
 <input source article 1>
-{{^sources.0.useVerbatim}}
+{{^sources.0.flags.copySourceVerbatim}}
 Source 1 (aim for about 5 key points about Source 1):
 <source-1-content>
 {{sources.0.factsBitSplitting1}}{{sources.0.factsBitSplitting2}}
 </source-1-content>
-{{/sources.0.useVerbatim}}
-{{#sources.0.useVerbatim}}
+{{/sources.0.flags.copySourceVerbatim}}
+{{#sources.0.flags.copySourceVerbatim}}
 Source 1 (this exact text will be the opening of the article, so the first few key points should indicate that this exact text is the opening):
-{{sources.0.factsBitSplitting1}}{{/sources.0.useVerbatim}}
+{{sources.0.factsBitSplitting1}}{{/sources.0.flags.copySourceVerbatim}}
 </input source article 1>
 
 {{#sources.1.factsBitSplitting1}}

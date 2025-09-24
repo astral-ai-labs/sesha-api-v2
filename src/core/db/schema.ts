@@ -8,7 +8,7 @@
 /*   - Enhanced progress tracking with 10% increments                        */
 /* ==========================================================================*/
 
-import { pgTable, pgEnum, uuid, varchar, text, boolean, timestamp, integer, index, uniqueIndex, serial, numeric, smallint } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, uuid, varchar, text, boolean, timestamp, integer, index, uniqueIndex, serial, numeric, smallint, jsonb } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
 /* ==========================================================================*/
@@ -26,7 +26,6 @@ export const headlineAuthorEnum = pgEnum("headline_author", ["human", "ai"]);
 export const blobsEnum = pgEnum("blobs", ["1", "2", "3", "4", "5", "6"]);
 export const lengthEnum = pgEnum("length", ["100-250", "400-550", "700-850", "1000-1200"]);
 export const ingestionTypeEnum = pgEnum("ingestion_type", ["digest", "aggregate"]);
-
 
 /* ==========================================================================*/
 /* Core Tables                                                                */
@@ -73,10 +72,10 @@ export const presets = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 255 }).notNull(),
     instructions: text("instructions").notNull(),
-    blobs: blobsEnum("blobs").notNull(),
-    length: lengthEnum("length").notNull(),
 
-    orgId: integer("org_id").references(() => organizations.id).notNull(),
+    orgId: integer("org_id")
+      .references(() => organizations.id)
+      .notNull(),
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -92,23 +91,29 @@ export const articles = pgTable(
     slug: varchar("slug", { length: 255 }).notNull(),
     version: numeric("version", { precision: 4, scale: 2 }).default("1.00").notNull(),
 
-    orgId: integer("org_id").references(() => organizations.id).notNull(),
+    orgId: integer("org_id")
+      .references(() => organizations.id)
+      .notNull(),
 
     headline: varchar("headline", { length: 500 }),
     blob: text("blob"),
     content: text("content"),
     richContent: text("rich_content"),
 
-    // Removed inputPresetTitle as requested
-    inputPresetInstructions: text("input_preset_instructions"),
-    inputPresetBlobs: blobsEnum("input_preset_blobs").notNull(),
-    inputPresetLength: lengthEnum("input_preset_length").notNull(),
+    inputInstructions: text("input_instructions"),
+    inputBlobs: blobsEnum("input_blobs").notNull(),
+    inputLength: lengthEnum("input_length").notNull(),
 
     status: articleStatusEnum("status").default("pending").notNull(),
     ingestionType: ingestionTypeEnum("ingestion_type").default("digest").notNull(),
 
     // Headline authorship tracking
     headlineAuthor: headlineAuthorEnum("headline_author").default("ai").notNull(),
+
+    // Rips
+    ripScore: integer("rip_score").default(0), // 0-100 score
+    ripAnalysis: text("rip_analysis").default(""), // Overall analysis text
+    ripComparisons: jsonb("rip_comparisons").default([]), // JSON string of QuoteComparison[]
 
     // The user who originally created the article (triggered the AI run)
     createdByUserId: uuid("created_by_user_id").references(() => users.id),
@@ -118,19 +123,11 @@ export const articles = pgTable(
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-    
+
     // Track when status was last updated for efficient polling
     statusUpdatedAt: timestamp("status_updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [
-    uniqueIndex("articles_org_slug_version_idx")
-      .on(table.orgId, table.slug, table.version),
-    index("articles_org_slug_idx").on(table.orgId, table.slug),
-    index("articles_status_idx").on(table.status),
-    index("articles_status_updated_at_idx").on(table.statusUpdatedAt),
-    index("articles_created_by_user_id_idx").on(table.createdByUserId),
-    index("articles_changed_by_user_id_idx").on(table.changedByUserId),
-  ]
+  (table) => [uniqueIndex("articles_org_slug_version_idx").on(table.orgId, table.slug, table.version), index("articles_org_slug_idx").on(table.orgId, table.slug), index("articles_status_idx").on(table.status), index("articles_status_updated_at_idx").on(table.statusUpdatedAt), index("articles_created_by_user_id_idx").on(table.createdByUserId), index("articles_changed_by_user_id_idx").on(table.changedByUserId)]
 );
 
 export const articleSources = pgTable(

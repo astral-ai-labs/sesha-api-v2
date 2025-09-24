@@ -17,6 +17,7 @@ import { simpleGenerateText } from "@/core/ai/call/generateText";
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { AddSourceAttributionRequest, AddSourceAttributionResponse } from "./types";
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
 // Implementation
@@ -25,7 +26,7 @@ import type { StepConfig } from "@/domains/drafting/common/types/runner";
 /**
  * Format article with proper sentence-per-line structure and clean attribution.
  */
-async function addSourceAttribution(request: AddSourceAttributionRequest, stepConfig: StepConfig): Promise<AddSourceAttributionResponse> {
+async function addSourceAttribution(request: AddSourceAttributionRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<AddSourceAttributionResponse> {
   // 1️⃣ Prepare template variables ----
   const userTemplateVariables = {
     revisedArticle: request.context.revisedArticle,
@@ -38,7 +39,14 @@ async function addSourceAttribution(request: AddSourceAttributionRequest, stepCo
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
   const formattedAssistant = formatPrompt(prompts.assistantTemplate, undefined, PromptType.ASSISTANT);
 
-  // 3️⃣ Generate AI response ----
+  // 3️⃣ Log final prompts before AI call ----
+  verboseLogger?.logStepPrompts(stepConfig.stepName, {
+    system: formattedSystem,
+    user: formattedUser,
+    assistant: formattedAssistant
+  });
+
+  // 4️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
     model: stepConfig.model,
     systemPrompt: formattedSystem,
@@ -53,8 +61,13 @@ async function addSourceAttribution(request: AddSourceAttributionRequest, stepCo
     .replace(/<\/?output[^>]*>/g, '') // Remove any <output> or </output> tags
     .trim(); // Remove leading and trailing whitespace
 
-  // 5️⃣ Structure response with usage tracking ----
-  return createSuccessResponse({ attributedArticle: cleanedText }, stepConfig.model, aiResult.usage);
+  // 6️⃣ Structure response with usage tracking ----
+  const response = createSuccessResponse({ attributedArticle: cleanedText }, stepConfig.model, aiResult.usage);
+  
+  // 7️⃣ Log step output ----
+  verboseLogger?.logStepOutput(stepConfig.stepName, response.output);
+  
+  return response;
 }
 
 /* ==========================================================================*/
