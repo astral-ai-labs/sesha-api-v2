@@ -56,7 +56,7 @@ async function handleArticleExportAsPdf(exportData: ArticleExportDataWithHtml): 
     console.log("✅ PDF export completed:", filename);
 
     // 4️⃣ Return PDF file -----
-    const response = new NextResponse(pdfBuffer, {
+    const response = new NextResponse(Buffer.from(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
