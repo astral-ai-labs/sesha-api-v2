@@ -197,7 +197,7 @@ export default inngest.createFunction(
           version: finalizedDraftVerbatim.article.version,
         };
 
-        const response = await fetch("/api/drafting/send-completion-email", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/drafting/send-completion-email`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(emailPayload),
