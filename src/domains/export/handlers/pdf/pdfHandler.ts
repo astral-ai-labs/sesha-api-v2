@@ -10,6 +10,7 @@
 /* ==========================================================================*/
 
 // Internal Modules ----
+import { NextResponse } from "next/server";
 import type { ArticleExportDataWithHtml, ExportHandlerResponse } from "../../types";
 import { generatePdfHtml, initializeBrowser } from "./_helpers";
 
@@ -55,7 +56,7 @@ async function handleArticleExportAsPdf(exportData: ArticleExportDataWithHtml): 
     console.log("✅ PDF export completed:", filename);
 
     // 4️⃣ Return PDF file -----
-    const response = new Response(pdfBuffer, {
+    const response = new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
@@ -68,7 +69,6 @@ async function handleArticleExportAsPdf(exportData: ArticleExportDataWithHtml): 
       success: true,
       data: response,
     };
-
   } catch (error) {
     // Ensure browser is closed on error
     await browser.close();

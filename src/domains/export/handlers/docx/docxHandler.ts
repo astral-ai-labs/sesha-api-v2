@@ -12,6 +12,7 @@
 // Internal Modules ----
 import type { ArticleExportDataWithHtml, ExportHandlerResponse } from "../../types";
 import { generateDocxHtml } from "./_helpers";
+import { NextResponse } from "next/server";
 
 // HTMLtoDOCX
 import HTMLtoDOCX from "html-to-docx";
@@ -43,7 +44,7 @@ async function handleArticleExportAsDocx(exportData: ArticleExportDataWithHtml):
   }
 
   // 3️⃣ Return DOCX file -----
-  const response = new Response(docxBuffer, {
+  const response = new NextResponse(docxBuffer, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "Content-Disposition": `attachment; filename="${exportData.slug}-v${exportData.version}.docx"`,
