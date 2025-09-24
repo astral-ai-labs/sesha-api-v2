@@ -344,7 +344,7 @@ export default inngest.createFunction(
     await step.run("send-completion-email", async () => {
       const emailPayload = {
         to: [finalizedDraft.userInfo.email],
-        subject: `Article Complete: ${generatedHeadlines.output.generatedHeadline} version ${finalizedDraft.article.version}`,
+        subject: `Article Complete: ${pipelineRequest.userSpecifiedHeadline || generatedHeadlines.output.generatedHeadline} version ${finalizedDraft.article.version}`,
         articleHref: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/article?slug=${finalizedDraft.article.slug}&version=${finalizedDraft.article.version}`,
         name: finalizedDraft.userInfo.firstName || "there",
         slug: finalizedDraft.article.slug,
