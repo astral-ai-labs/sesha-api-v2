@@ -13,6 +13,7 @@ import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/
 /**
  * Context for extract facts step - no previous step results needed.
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ExtractFactsContext {}
 
 /**

@@ -12,6 +12,7 @@ import { simpleGenerateText } from "@/core/ai/call";
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { ExtractFactsRequest, ExtractFactsResponse } from "@/domains/drafting/digestion/steps/01-extract-facts/types";
 import { StepConfig } from "@/domains/drafting/common/types";
+import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
 // Step Configuration
@@ -24,7 +25,7 @@ import { StepConfig } from "@/domains/drafting/common/types";
 /**
  * Extract facts from source content using AI analysis.
  */
-export async function extractFacts(request: ExtractFactsRequest, stepConfig: StepConfig): Promise<ExtractFactsResponse> {
+export async function extractFacts(request: ExtractFactsRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<ExtractFactsResponse> {
   // 1️⃣ Prepare template variables ----
   const userTemplateVariables = {
     source: request.sources[0],
@@ -37,7 +38,14 @@ export async function extractFacts(request: ExtractFactsRequest, stepConfig: Ste
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
   const formattedAssistant = formatPrompt(prompts.assistantTemplate, undefined, PromptType.ASSISTANT);
 
-  // 3️⃣ Generate AI response ----
+  // 3️⃣ Log final prompts before AI call ----
+  verboseLogger?.logStepPrompts(stepConfig.stepName, {
+    system: formattedSystem,
+    user: formattedUser,
+    assistant: formattedAssistant
+  });
+
+  // 4️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
     model: stepConfig.model,
     systemPrompt: formattedSystem,
@@ -47,6 +55,11 @@ export async function extractFacts(request: ExtractFactsRequest, stepConfig: Ste
     maxTokens: stepConfig.maxTokens,
   });
 
-  // 4️⃣ Structure response with usage tracking ----
-  return createSuccessResponse({ extractedFacts: aiResult.text }, stepConfig.model, aiResult.usage);
+  // 5️⃣ Structure response with usage tracking ----
+  const response = createSuccessResponse({ extractedFacts: aiResult.text }, stepConfig.model, aiResult.usage);
+  
+  // 6️⃣ Log step output ----
+  verboseLogger?.logStepOutput(stepConfig.stepName, response.output);
+  
+  return response;
 }
