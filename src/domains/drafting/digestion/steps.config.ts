@@ -23,7 +23,7 @@ export const STEP_CONFIGS: Record<stepName, StepConfig> = {
     stepName: "01-extract-facts",
     model: DEFAULT_MODEL,
     temperature: DEFAULT_TEMPERATURE,
-    maxTokens: DEFAULT_MAX_TOKENS,
+    maxTokens: 2500,
   },
 
   "02-summarize-facts": {
@@ -35,43 +35,43 @@ export const STEP_CONFIGS: Record<stepName, StepConfig> = {
   "03-generate-headlines": {
     stepName: "03-generate-headlines",
     model: DEFAULT_MODEL,
-    temperature: 0.7,
-    maxTokens: 1000,
+    temperature: 0.5,
+    maxTokens: 500,
   },
 
   "04-create-outline": {
     stepName: "04-create-outline",
     model: DEFAULT_MODEL,
-    temperature: DEFAULT_TEMPERATURE,
-    maxTokens: 1500,
+    temperature: 0.6,
+    maxTokens: DEFAULT_MAX_TOKENS,
   },
 
   "04-digest-verbatim-conditional": {
     stepName: "04-digest-verbatim-conditional",
     model: DEFAULT_MODEL,
-    temperature: DEFAULT_TEMPERATURE,
-    maxTokens: DEFAULT_MAX_TOKENS,
+    temperature: 0.2,
+    maxTokens: 4000,
   },
 
   "05-draft-article": {
     stepName: "05-draft-article",
     model: DEFAULT_MODEL,
-    temperature: 0.4,
-    maxTokens: 4000,
+    temperature: 0.6,
+    maxTokens: 3000,
   },
 
   "06-revise-article": {
     stepName: "06-revise-article",
     model: DEFAULT_MODEL,
-    temperature: DEFAULT_TEMPERATURE,
-    maxTokens: 4000,
+    temperature: 0.5,
+    maxTokens: 3700,
   },
 
   "07-add-source-attribution": {
     stepName: "07-add-source-attribution",
     model: DEFAULT_MODEL,
-    temperature: 0.1, // Very precise for attribution
-    maxTokens: DEFAULT_MAX_TOKENS,
+    temperature: 0.2, // Very precise for attribution
+    maxTokens: 3700,
   },
 } as const;
 

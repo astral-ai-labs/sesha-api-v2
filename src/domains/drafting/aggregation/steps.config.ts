@@ -52,8 +52,8 @@ export const STEP_CONFIGS: Record<stepName, StepConfig> = {
   "05-draft-article": {
     stepName: "05-draft-article",
     model: DEFAULT_MODEL,
-    temperature: 0.4,
-    maxTokens: 4000,
+    temperature: 0.7,
+    maxTokens: 3000,
   },
 
   "06-revise-article": {
