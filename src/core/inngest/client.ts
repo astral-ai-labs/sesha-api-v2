@@ -12,7 +12,7 @@
 // External Packages ---
 import { Inngest, EventSchemas } from "inngest";
 import winston from "winston";
-import { join } from "path";
+// import { join } from "path";
 
 // Inngest Function Request Types
 // IMPORTANT: This is a temporary import and will be removed eventually, or we need to find a better way to handle this.
@@ -49,21 +49,21 @@ const createLogger = () => {
     })
   ];
 
-  const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+  // const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
 
-  // Only add file transport in development and when not running on Vercel or AWS Lambda
-  if (process.env.IS_DEV || !isServerless) {
-    transports.push(
-      new winston.transports.File({
-        filename: join(process.cwd(), "logs", "pipeline.log"),
-        format: winston.format.combine(
-          winston.format.timestamp(),
-          winston.format.json()
-        ),
-        level: "info"
-      })
-    );
-  }
+  // // Only add file transport in development and when not running on Vercel or AWS Lambda
+  // if (process.env.IS_DEV || !isServerless) {
+  //   transports.push(
+  //     new winston.transports.File({
+  //       filename: join(process.cwd(), "logs", "pipeline.log"),
+  //       format: winston.format.combine(
+  //         winston.format.timestamp(),
+  //         winston.format.json()
+  //       ),
+  //       level: "info"
+  //     })
+  //   );
+  // }
 
   return winston.createLogger({
     level: "info",
