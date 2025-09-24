@@ -36,27 +36,34 @@ type Events = {
 /* ==========================================================================*/
 
 /**
- * Winston logger configuration for Inngest - single log file, structured JSON
+ * Winston logger configuration for Inngest - console only for Vercel compatibility
  */
 const createLogger = () => {
   const transports: winston.transport[] = [
-    // Console for development
+    // Console for development and production (Vercel)
     new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      )
-    }),
-    // Single structured log file
-    new winston.transports.File({
-      filename: join(process.cwd(), "logs", "pipeline.log"),
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.json()
-      ),
-      level: "info"
+      )
     })
   ];
+
+  const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+
+  // Only add file transport in development and when not running on Vercel or AWS Lambda
+  if (process.env.IS_DEV || !isServerless) {
+    transports.push(
+      new winston.transports.File({
+        filename: join(process.cwd(), "logs", "pipeline.log"),
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.json()
+        ),
+        level: "info"
+      })
+    );
+  }
 
   return winston.createLogger({
     level: "info",
