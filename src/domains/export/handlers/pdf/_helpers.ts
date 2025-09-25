@@ -188,6 +188,9 @@ async function initializeBrowser() {
   // 1️⃣ Detect environment -----
   const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
 
+  const remoteExecutablePath =
+  "https://github.com/Sparticuz/chromium/releases/download/v121.0.0/chromium-v121.0.0-pack.tar";
+
   let browser;
   if (!isServerless) {
     // Development/Local: Use regular puppeteer with built-in Chrome
@@ -201,11 +204,11 @@ async function initializeBrowser() {
     // Serverless/Production: Use puppeteer-core with serverless Chrome
     console.log("📄 Using puppeteer-core with serverless Chrome");
     const puppeteerCore = await import("puppeteer-core");
-    const chromium = await import("@sparticuz/chromium");
+    const chromium = await import("@sparticuz/chromium-min");
 
-    browser = await puppeteerCore.default.launch({
+    browser = await puppeteerCore.launch({
       args: chromium.default.args,
-      executablePath: await chromium.default.executablePath(),
+      executablePath: await chromium.default.executablePath(remoteExecutablePath),
       headless: true,
     });
   }
