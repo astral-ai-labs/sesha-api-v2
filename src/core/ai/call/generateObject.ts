@@ -10,10 +10,17 @@
 /* ==========================================================================*/
 
 // External Packages ---
-import { generateObject } from "ai";
+import OpenAI from "openai";
 import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
-import {openai} from "@ai-sdk/openai";
+/* ==========================================================================*/
+// Client Initialization
+/* ==========================================================================*/
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 /* ==========================================================================*/
 // Types & Interfaces
@@ -50,31 +57,54 @@ interface GenerateObjectResponse<T> {
 /* ==========================================================================*/
 
 /**
- * Generate structured object using AI SDK with simplified configuration options.
+ * Generate structured object using OpenAI SDK with structured outputs.
  */
 async function simpleGenerateObject<T>(config: GenerateObjectConfig<T>): Promise<GenerateObjectResponse<T>> {
-  // 1️⃣ Generate structured object -----
+  // 1️⃣ Convert Zod schema to JSON Schema -----
+  const jsonSchema = zodToJsonSchema(config.schema, "structured_output");
 
-  const finalModel = config.model.toString();
+  // 2️⃣ Build messages array -----
+  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
+  
+  if (config.systemPrompt) {
+    messages.push({ role: "system", content: config.systemPrompt });
+  }
+  
+  messages.push({ role: "user", content: config.userPrompt });
+  
+  if (config.assistantPrompt) {
+    messages.push({ role: "assistant", content: config.assistantPrompt });
+  }
 
   try {
-    const result = await generateObject({
-      model: openai(finalModel),
-      system: config.systemPrompt,
-      prompt: config.userPrompt,
-      assistant: config.assistantPrompt,
-      schema: config.schema,
-      temperature: config.temperature,
-      maxOutputTokens: config.maxTokens,
+    // 3️⃣ Call OpenAI with structured outputs -----
+    const response = await openai.chat.completions.create({
+      model: config.model,
+      messages,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "structured_output",
+          schema: jsonSchema,
+          strict: true,
+        },
+      },
+      temperature: config.temperature ?? 0.1,
+      max_tokens: config.maxTokens ?? 4000,
     });
 
-    // 2️⃣ Parse response -----
+    // 4️⃣ Parse and return response -----
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error("No content returned from OpenAI");
+    }
+
     return {
-      object: result.object,
+      object: JSON.parse(content) as T,
       usage: {
-        inputTokens: result.usage.inputTokens ?? 0,
-        outputTokens: result.usage.outputTokens ?? 0,
-        totalTokens: result.usage.totalTokens ?? 0,
+        inputTokens: response.usage?.prompt_tokens ?? 0,
+        outputTokens: response.usage?.completion_tokens ?? 0,
+        totalTokens: response.usage?.total_tokens ?? 0,
       },
     };
   } catch (error: unknown) {
