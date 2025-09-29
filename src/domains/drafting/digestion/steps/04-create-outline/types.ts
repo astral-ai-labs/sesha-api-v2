@@ -19,9 +19,9 @@ interface CreateOutlineContext {
   /** Condensed summary from step 02 */
   extractedFactsSummary: string;
   /** Generated headlines from step 03 */
-  generatedHeadline: string;
+  finalizedHeadline: string;
   /** Generated content blobs from step 03 */
-  generatedBlobs: string[];
+  finalizedBlobs: string[];
 }
 
 /**

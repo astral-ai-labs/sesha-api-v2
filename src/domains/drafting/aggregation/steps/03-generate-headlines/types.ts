@@ -16,6 +16,8 @@ import type { SourceFactsResult, SourceFactsConditionalResult } from "../02-extr
  * Context for generate headlines step - includes results from previous steps.
  */
 interface GenerateHeadlinesContext {
+  /** User specified headline */
+  userSpecifiedHeadline?: string;
   /** Facts extracted from each source from step 01 */
   extractedFactsResults: SourceFactsResult[];
   /** Conditionally processed facts from each source from step 02 */
@@ -27,9 +29,9 @@ interface GenerateHeadlinesContext {
  */
 interface GenerateHeadlinesOutput {
   /** Generated headline for the aggregated article */
-  generatedHeadline: string;
+  finalizedHeadline: string;
   /** Generated content blobs for article sections */
-  generatedBlobs: string[];
+  finalizedBlobs: string[];
 }
 
 /* ==========================================================================*/

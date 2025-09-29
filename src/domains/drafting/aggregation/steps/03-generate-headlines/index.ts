@@ -68,7 +68,7 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
   verboseLogger?.logStepPrompts(stepConfig.stepName, {
     system: formattedSystem,
     user: formattedUser,
-    assistant: formattedAssistant
+    assistant: formattedAssistant,
   });
 
   // 4️⃣ Generate raw headline and blobs ----
@@ -101,16 +101,16 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
   // 6️⃣ Structure response with usage tracking ----
   const response = createSuccessResponse(
     {
-      generatedHeadline: structuredResult.object.headline,
-      generatedBlobs: structuredResult.object.blobs,
+      finalizedHeadline: request.context.userSpecifiedHeadline || structuredResult.object.headline, //If the user specified a headline, use it, otherwise use the generated headline
+      finalizedBlobs: structuredResult.object.blobs,
     },
     stepConfig.model,
     combinedUsage
   );
-  
+
   // 7️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);
-  
+
   return response;
 }
 

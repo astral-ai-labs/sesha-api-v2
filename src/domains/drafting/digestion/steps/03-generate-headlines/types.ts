@@ -14,6 +14,8 @@ import type { StepRequest, StepResponse } from "@/domains/drafting/common/types/
  * Context for generate headlines step - includes results from previous steps.
  */
 interface GenerateHeadlinesContext {
+  /** User specified headline */
+  userSpecifiedHeadline?: string;
   /** Extracted fact quotes from step 01 */
   extractedFacts: string;
   /** Condensed summary from step 02 */
@@ -25,8 +27,8 @@ interface GenerateHeadlinesContext {
  */
 interface GenerateHeadlinesOutput {
   /** Generated headline for the article */
-  generatedHeadline: string;
-  generatedBlobs: string[];
+  finalizedHeadline: string;
+  finalizedBlobs: string[];
 }
 
 /* ==========================================================================*/

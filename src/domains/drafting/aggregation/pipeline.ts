@@ -89,6 +89,14 @@ export default inngest.createFunction(
     // Wait for both steps to complete in parallel
     const [pipelineRequest] = await Promise.all([getPipelineRequest, initializeRun]);
 
+    //Set a flag if the user specified a headline
+    const isUserSpecifiedHeadline = pipelineRequest.userSpecifiedHeadline !== undefined;
+
+    if (isUserSpecifiedHeadline) {
+      console.log("User specified headline detected, must use this for the headline!");
+    }
+
+
     // 3️⃣ Validate sources for aggregation -----
     if (!pipelineRequest.sources || pipelineRequest.sources.length === 0) {
       throw new Error("Aggregation pipeline requires at least one source");
@@ -181,11 +189,12 @@ export default inngest.createFunction(
 
     // 7️⃣ Generate headlines (sequential, uses all source results) -----
     stepName = "03-generate-headlines";
-    const generatedHeadlines = await step.run(stepName, async () => {
+    const finalizedHeadlinesAndBlobs = await step.run(stepName, async () => {
       const request = {
         ...baseStepRequest,
         sources: pipelineRequest.sources,
         context: {
+          userSpecifiedHeadline: pipelineRequest.userSpecifiedHeadline,
           extractedFactsResults: extractedFactsResults.extractedFactsResults as SourceFactsResult[],
           extractedFactsConditionalResults: extractedFactsConditional.extractedFactsConditionalResults as SourceFactsConditionalResult[],
         },
@@ -195,7 +204,7 @@ export default inngest.createFunction(
 
     // Update status and accumulate usage after step 3
     await step.run("update-status-usage-30", async () => {
-      return await updateArticleStatusAndUsage(articleId, "30%", generatedHeadlines.usage);
+      return await updateArticleStatusAndUsage(articleId, "30%", finalizedHeadlinesAndBlobs.usage);
     });
 
     // 8️⃣ Create outline (sequential, uses all source results) -----
@@ -207,8 +216,8 @@ export default inngest.createFunction(
         context: {
           extractedFactsResults: extractedFactsResults.extractedFactsResults as SourceFactsResult[],
           extractedFactsConditionalResults: extractedFactsConditional.extractedFactsConditionalResults as SourceFactsConditionalResult[],
-          generatedHeadline: generatedHeadlines.output.generatedHeadline,
-          generatedBlobs: generatedHeadlines.output.generatedBlobs,
+          finalizedHeadline: finalizedHeadlinesAndBlobs.output.finalizedHeadline,
+          finalizedBlobs: finalizedHeadlinesAndBlobs.output.finalizedBlobs,
         },
       };
       return await createOutline(request, getStepConfig(stepName), verboseLogger);
@@ -228,8 +237,8 @@ export default inngest.createFunction(
         context: {
           extractedFactsResults: extractedFactsResults.extractedFactsResults as SourceFactsResult[],
           extractedFactsConditionalResults: extractedFactsConditional.extractedFactsConditionalResults as SourceFactsConditionalResult[],
-          generatedHeadlines: generatedHeadlines.output.generatedHeadline,
-          generatedBlobs: generatedHeadlines.output.generatedBlobs,
+          finalizedHeadline: finalizedHeadlinesAndBlobs.output.finalizedHeadline,
+          finalizedBlobs: finalizedHeadlinesAndBlobs.output.finalizedBlobs,
           createdOutline: createdOutline.output.createdOutline,
         },
       };
@@ -318,13 +327,13 @@ export default inngest.createFunction(
       },
     };
 
-    const formattedBlobs = generatedHeadlines.output.generatedBlobs.join("\n");
+    const formattedBlobs = finalizedHeadlinesAndBlobs.output.finalizedBlobs.join("\n");
 
     // Final step: finalize draft
     const finalizedDraft = await step.run("finalize-draft", async () => {
       return await finalizeDraft(articleId, userId, {
         draftType: draftType,
-        headline: generatedHeadlines.output.generatedHeadline,
+        headline: finalizedHeadlinesAndBlobs.output.finalizedHeadline,
         blob: formattedBlobs,
         content: colorCodedArticle.output.content,
         richContent: colorCodedArticle.output.richContent,
@@ -344,7 +353,7 @@ export default inngest.createFunction(
     await step.run("send-completion-email", async () => {
       const emailPayload = {
         to: [finalizedDraft.userInfo.email],
-        subject: `Article Complete: ${pipelineRequest.userSpecifiedHeadline || generatedHeadlines.output.generatedHeadline} version ${finalizedDraft.article.version}`,
+        subject: `Article Complete: ${finalizedHeadlinesAndBlobs.output.finalizedHeadline} version ${finalizedDraft.article.version}`,
         articleHref: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/article?slug=${finalizedDraft.article.slug}&version=${finalizedDraft.article.version}`,
         name: finalizedDraft.userInfo.firstName || "there",
         slug: finalizedDraft.article.slug,

@@ -33,7 +33,7 @@ async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig
   const sentenceGuidance = getSentenceGuidance(wordTarget);
 
   // 2️⃣ Create headline and blobs text ----
-  const headlineAndBlobsText = formatHeadlinesBlobs(request.context.generatedHeadlines, request.context.generatedBlobs);
+  const headlineAndBlobsText = formatHeadlinesBlobs(request.context.finalizedHeadline, request.context.finalizedBlobs);
 
   // 3️⃣ Prepare sources with aggregated facts ----
   const preparedSources = request.sources.map((source) => {
@@ -60,7 +60,7 @@ async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig
   };
 
   const userTemplateVariables = {
-    headline: request.context.generatedHeadlines,
+    headline: request.context.finalizedHeadline,
     blobs: headlineAndBlobsText,
     wordTarget: wordTarget.toString(),
     articleOutline: request.context.createdOutline,

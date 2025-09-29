@@ -228,7 +228,7 @@ async function createOutline(request: CreateOutlineRequest, stepConfig: StepConf
   const sourcesWithFacts = buildSourcesWithFactsSplitting(request.sources, request.context.extractedFactsResults, request.context.extractedFactsConditionalResults);
 
   // 2️⃣ Create headline and blobs text ----
-  const headlineAndBlobsText = formatHeadlinesBlobs(request.context.generatedHeadline, request.context.generatedBlobs);
+  const headlineAndBlobsText = formatHeadlinesBlobs(request.context.finalizedHeadline, request.context.finalizedBlobs);
 
   // 3️⃣ Prepare template variables ----
   const systemTemplateVariables = {
@@ -237,7 +237,7 @@ async function createOutline(request: CreateOutlineRequest, stepConfig: StepConf
   };
 
   const userTemplateVariables = {
-    headline: request.context.generatedHeadline,
+    headline: request.context.finalizedHeadline,
     blobs: headlineAndBlobsText,
     instructions: request.instructions,
     keyPointInstructions: getKeyPointInstructions(sourcesWithFacts.length),

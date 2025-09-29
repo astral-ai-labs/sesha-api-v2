@@ -82,6 +82,13 @@ export default inngest.createFunction(
     // Wait for both steps to complete in parallel
     const [pipelineRequest] = await Promise.all([getPipelineRequest, initializeRun]);
 
+    //Set a flag if the user specified a headline
+    const isUserSpecifiedHeadline = pipelineRequest.userSpecifiedHeadline !== undefined;
+
+    if (isUserSpecifiedHeadline) {
+      console.log("User specified headline detected, must use this for the headline!");
+    }
+
     // 4️⃣ Check for verbatim mode -----
     const isVerbatim = pipelineRequest.sources.some((source) => source.flags.copySourceVerbatim);
 
@@ -140,20 +147,21 @@ export default inngest.createFunction(
 
     // 6️⃣ Generate headlines -----
     stepName = "03-generate-headlines";
-    const generatedHeadlines = await step.run(stepName, async () => {
-      const generatedHeadlinesRequest = {
+    const finalizedHeadlinesAndBlobs = await step.run(stepName, async () => {
+      const finalizedHeadlinesAndBlobsRequest = {
         ...baseStepRequest,
         context: {
+          userSpecifiedHeadline: pipelineRequest.userSpecifiedHeadline,
           extractedFacts: extractedFacts.output.extractedFacts,
           extractedFactsSummary: summarizedFacts.output.extractedFactsSummary,
         },
       };
-      return await generateHeadlines(generatedHeadlinesRequest, getStepConfig(stepName), verboseLogger);
+      return await generateHeadlines(finalizedHeadlinesAndBlobsRequest, getStepConfig(stepName), verboseLogger);
     });
 
     // Update status and accumulate usage after step 3
     await step.run("update-status-usage-step-3", async () => {
-      return await updateArticleStatusAndUsage(articleId, isVerbatim ? "80%" : "30%", generatedHeadlines.usage);
+      return await updateArticleStatusAndUsage(articleId, isVerbatim ? "80%" : "30%", finalizedHeadlinesAndBlobs.usage);
     });
 
     // 7️⃣ Handle verbatim flow -----
@@ -168,13 +176,13 @@ export default inngest.createFunction(
         return await digestVerbatimConditional(verbatimRequest, getStepConfig(stepName), verboseLogger);
       });
 
-      const formattedBlobsVerbatim = generatedHeadlines.output.generatedBlobs.join("\n");
+      const formattedBlobsVerbatim = finalizedHeadlinesAndBlobs.output.finalizedBlobs.join("\n");
 
       // Final step: finalize draft for verbatim
       const finalizedDraftVerbatim = await step.run("finalize-draft-verbatim", async () => {
         return await finalizeDraft(articleId, userId, {
           draftType: draftType,
-          headline: generatedHeadlines.output.generatedHeadline,
+          headline: finalizedHeadlinesAndBlobs.output.finalizedHeadline,
           blob: formattedBlobsVerbatim,
           content: verbatimResult.output.digestedVerbatim,
           userSpecifiedHeadline: pipelineRequest.userSpecifiedHeadline,
@@ -190,7 +198,7 @@ export default inngest.createFunction(
       await step.run("send-completion-email-verbatim", async () => {
         const emailPayload = {
           to: [finalizedDraftVerbatim.userInfo.email],
-          subject: `Article Complete: ${pipelineRequest.userSpecifiedHeadline || generatedHeadlines.output.generatedHeadline} version ${finalizedDraftVerbatim.article.version}`,
+          subject: `Article Complete: ${finalizedHeadlinesAndBlobs.output.finalizedHeadline} version ${finalizedDraftVerbatim.article.version}`,
           articleHref: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/article?slug=${finalizedDraftVerbatim.article.slug}&version=${finalizedDraftVerbatim.article.version}`,
           name: finalizedDraftVerbatim.userInfo.firstName || "there",
           slug: finalizedDraftVerbatim.article.slug,
@@ -227,8 +235,8 @@ export default inngest.createFunction(
         context: {
           extractedFacts: extractedFacts.output.extractedFacts,
           extractedFactsSummary: summarizedFacts.output.extractedFactsSummary,
-          generatedHeadline: generatedHeadlines.output.generatedHeadline,
-          generatedBlobs: generatedHeadlines.output.generatedBlobs,
+          finalizedHeadline: finalizedHeadlinesAndBlobs.output.finalizedHeadline,
+          finalizedBlobs: finalizedHeadlinesAndBlobs.output.finalizedBlobs,
         },
       };
       return await createOutline(createOutlineRequest, getStepConfig(stepName), verboseLogger);
@@ -247,8 +255,8 @@ export default inngest.createFunction(
         context: {
           extractedFacts: extractedFacts.output.extractedFacts,
           extractedFactsSummary: summarizedFacts.output.extractedFactsSummary,
-          generatedHeadline: generatedHeadlines.output.generatedHeadline,
-          generatedBlobs: generatedHeadlines.output.generatedBlobs,
+          finalizedHeadline: finalizedHeadlinesAndBlobs.output.finalizedHeadline,
+          finalizedBlobs: finalizedHeadlinesAndBlobs.output.finalizedBlobs,
           createdOutline: createdOutline.output.createdOutline,
         },
       };
@@ -289,13 +297,13 @@ export default inngest.createFunction(
       return await addSourceAttribution(addSourceAttributionRequest, getStepConfig(stepName), verboseLogger);
     });
 
-    const formattedBlobs = generatedHeadlines.output.generatedBlobs.join("\n");
+    const formattedBlobs = finalizedHeadlinesAndBlobs.output.finalizedBlobs.join("\n");
 
     // Final step: finalize draft
     const finalizedDraft = await step.run("finalize-draft", async () => {
       return await finalizeDraft(articleId, userId, {
         draftType: draftType,
-        headline: generatedHeadlines.output.generatedHeadline,
+        headline: finalizedHeadlinesAndBlobs.output.finalizedHeadline,
         blob: formattedBlobs,
         content: attributedArticle.output.attributedArticle,
         userSpecifiedHeadline: pipelineRequest.userSpecifiedHeadline,
@@ -311,7 +319,7 @@ export default inngest.createFunction(
     await step.run("send-completion-email", async () => {
       const emailPayload = {
         to: [finalizedDraft.userInfo.email],
-        subject: `Article Complete: ${pipelineRequest.userSpecifiedHeadline || generatedHeadlines.output.generatedHeadline} version ${finalizedDraft.article.version}`,
+        subject: `Article Complete: ${finalizedHeadlinesAndBlobs.output.finalizedHeadline} version ${finalizedDraft.article.version}`,
         articleHref: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/article?slug=${finalizedDraft.article.slug}&version=${finalizedDraft.article.version}`,
         name: finalizedDraft.userInfo.firstName || "there",
         slug: finalizedDraft.article.slug,

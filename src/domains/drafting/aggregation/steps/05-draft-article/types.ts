@@ -24,10 +24,10 @@ interface DraftArticleContext {
     sourceNumber: number;
     factsBitSplitting2: string;
   }>;
-  /** Generated headlines from step 03 */
-  generatedHeadlines: string;
-  /** Generated content blobs from step 03 */
-  generatedBlobs: string[];
+  /** Finalized headlines from step 03 */
+  finalizedHeadline: string;
+  /** Finalized content blobs from step 03 */
+  finalizedBlobs: string[];
   /** Structured outline from step 04 */
   createdOutline: string;
 }

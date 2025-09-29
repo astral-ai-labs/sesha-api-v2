@@ -19,10 +19,10 @@ interface CreateOutlineContext {
   extractedFactsResults: SourceFactsResult[];
   /** Conditionally processed facts from each source from step 02 */
   extractedFactsConditionalResults: SourceFactsConditionalResult[];
-  /** Generated headline from step 03 */
-  generatedHeadline: string;
-  /** Generated content blobs from step 03 */
-  generatedBlobs: string[];
+  /** Finalized headline from step 03 */
+  finalizedHeadline: string;
+  /** Finalized content blobs from step 03 */
+  finalizedBlobs: string[];
 }
 
 /**

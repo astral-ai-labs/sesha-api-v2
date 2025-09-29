@@ -19,9 +19,9 @@ interface DraftArticleContext {
   /** Condensed summary from step 02 */
   extractedFactsSummary: string;
   /** Generated headline from step 03 */
-  generatedHeadline: string;
+  finalizedHeadline: string;
   /** Generated content blobs from step 03 */
-  generatedBlobs: string[];
+  finalizedBlobs: string[];
   /** Structured outline from step 04 */
   createdOutline: string;
 }

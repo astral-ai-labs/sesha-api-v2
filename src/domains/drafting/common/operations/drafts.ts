@@ -196,6 +196,7 @@ async function getArticleAsPipelineRequest(articleId: string): Promise<PipelineR
     },
   }));
 
+
   // 5️⃣ Build pipeline request -----
   return {
     metadata: {
@@ -207,7 +208,7 @@ async function getArticleAsPipelineRequest(articleId: string): Promise<PipelineR
     numberOfBlobs: articleData.inputBlobs,
     lengthRange: articleData.inputLength,
     instructions: articleData.inputInstructions || "",
-    userSpecifiedHeadline: articleData.headline || undefined,
+    userSpecifiedHeadline: articleData.headlineAuthor === "human" ? articleData.headline : undefined,
     sources: transformedSources,
   } as unknown as PipelineRequest;
 }

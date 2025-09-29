@@ -33,7 +33,7 @@ async function draftArticle(request: DraftArticleRequest, stepConfig: StepConfig
   const exampleArticles = getExampleArticles(wordTarget);
   
   // 2️⃣ Create headline and blobs text ----
-  const headlineAndBlobsText = formatHeadlinesBlobs(request.context.generatedHeadline, request.context.generatedBlobs);
+  const headlineAndBlobsText = formatHeadlinesBlobs(request.context.finalizedHeadline, request.context.finalizedBlobs);
   
   // 3️⃣ Prepare template variables ----
   const systemTemplateVariables = {

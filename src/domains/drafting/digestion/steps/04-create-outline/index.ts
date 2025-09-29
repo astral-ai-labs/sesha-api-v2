@@ -33,7 +33,7 @@ async function createOutline(request: CreateOutlineRequest, stepConfig: StepConf
   };
   
   // 2️⃣ Create headline and blobs text ----
-  const headlineAndBlobsText = formatHeadlinesBlobs(request.context.generatedHeadline, request.context.generatedBlobs);
+  const headlineAndBlobsText = formatHeadlinesBlobs(request.context.finalizedHeadline, request.context.finalizedBlobs);
   
   const userTemplateVariables = {
     source: request.sources[0],
