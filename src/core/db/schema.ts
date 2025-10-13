@@ -25,6 +25,7 @@ export const headlineAuthorEnum = pgEnum("headline_author", ["human", "ai"]);
 
 export const blobsEnum = pgEnum("blobs", ["1", "2", "3", "4", "5", "6"]);
 export const lengthEnum = pgEnum("length", ["100-250", "400-550", "700-850", "1000-1200"]);
+export const modelEnum = pgEnum("model", ["claude-3.7", "claude-4", "claude-4.5"]);
 export const ingestionTypeEnum = pgEnum("ingestion_type", ["digest", "aggregate"]);
 
 /* ==========================================================================*/
@@ -103,6 +104,7 @@ export const articles = pgTable(
     inputInstructions: text("input_instructions"),
     inputBlobs: blobsEnum("input_blobs").notNull(),
     inputLength: lengthEnum("input_length").notNull(),
+    inputModel: modelEnum("input_model").default("claude-3.7").notNull(),
 
     status: articleStatusEnum("status").default("pending").notNull(),
     ingestionType: ingestionTypeEnum("ingestion_type").default("digest").notNull(),
