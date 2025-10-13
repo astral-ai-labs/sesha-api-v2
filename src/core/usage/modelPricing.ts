@@ -33,6 +33,12 @@ const MODEL_PRICING: ModelPricingMap = {
   // Claude 4 Opus -----
   "claude-4-opus": { inputCostPerMToken: 15, outputCostPerMToken: 75 },
 
+  // Claude 4.1 Opus -----
+  "claude-4-1-opus": { inputCostPerMToken: 15, outputCostPerMToken: 75 },
+
+  // Claude 4.5 Sonnet -----
+  "claude-4-5-sonnet": { inputCostPerMToken: 3, outputCostPerMToken: 15 },
+
   // Claude 3 Opus -----
   "claude-3-opus": { inputCostPerMToken: 15, outputCostPerMToken: 75 },
 
