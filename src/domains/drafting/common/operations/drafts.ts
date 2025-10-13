@@ -16,6 +16,7 @@ import { db, articles, articleSources, articleStatusEnum, runs, users } from "@/
 import type { PipelineRequest, ArticleStatusAndUsageResult, RipQuoteComparison, DraftType } from "../types";
 import { LLMTokenUsage } from "@/core/usage/types";
 import { NonRetriableError } from "inngest";
+import { MODEL_PRICING } from "@/core/usage/modelPricing";
 
 /* ==========================================================================*/
 // Types & Interfaces
@@ -45,27 +46,6 @@ interface FinalizeDraftResult {
     lastName: string | null;
   };
 }
-
-// TODO: Move this to a dedicated pricing module
-const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  // Claude 3.5/3.7 Sonnet
-  "claude-3-5-sonnet-20240620": { input: 3, output: 15 },
-  "claude-3-5-sonnet": { input: 3, output: 15 },
-  "claude-3-7-sonnet": { input: 3, output: 15 },
-  // Claude 4 Sonnet
-  "claude-sonnet-4-20250514": { input: 3, output: 15 },
-  // Claude 4 Opus
-  "claude-4-opus": { input: 15, output: 75 },
-  // Claude 3 Opus
-  "claude-3-opus": { input: 15, output: 75 },
-  // Claude 3.5 Haiku
-  "claude-3-5-haiku": { input: 0.8, output: 4 },
-  // Claude 3 Haiku
-  "claude-3-haiku": { input: 0.25, output: 1.25 },
-  // OpenAI GPT-4o
-  "gpt-4o": { input: 2.5, output: 10 },
-  "gpt-4o-mini": { input: 0.15, output: 0.6 },
-};
 
 /* ==========================================================================*/
 // Implementation
@@ -147,15 +127,15 @@ function calculateUsageCost(usage: LLMTokenUsage[]): number {
     const pricing = model ? MODEL_PRICING[model] : null;
 
     if (!pricing) {
-      // Default to Claude 3.5 Sonnet pricing if model not found
+      // Default to Claude 3.7 Sonnet pricing if model not found
       const defaultPricing = { input: 3, output: 15 };
       const inputCost = (u.inputTokens / 1_000_000) * defaultPricing.input;
       const outputCost = (u.outputTokens / 1_000_000) * defaultPricing.output;
       return totalCost + inputCost + outputCost;
     }
 
-    const inputCost = (u.inputTokens / 1_000_000) * pricing.input;
-    const outputCost = (u.outputTokens / 1_000_000) * pricing.output;
+    const inputCost = (u.inputTokens / 1_000_000) * pricing.inputCostPerMToken;
+    const outputCost = (u.outputTokens / 1_000_000) * pricing.outputCostPerMToken;
     return totalCost + inputCost + outputCost;
   }, 0);
 }
@@ -207,6 +187,7 @@ async function getArticleAsPipelineRequest(articleId: string): Promise<PipelineR
     },
     numberOfBlobs: articleData.inputBlobs,
     lengthRange: articleData.inputLength,
+    modelSelection: articleData.inputModel,
     instructions: articleData.inputInstructions || "",
     userSpecifiedHeadline: articleData.headlineAuthor === "human" ? articleData.headline : undefined,
     sources: transformedSources,

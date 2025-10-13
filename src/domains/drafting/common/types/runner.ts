@@ -10,7 +10,7 @@
 /* ==========================================================================*/
 
 // Internal Modules ----
-import type { BlobsCount, LengthRange, RequestMetadata, Source } from "./primitives";
+import type { BlobsCount, LengthRange, ModelSelection, RequestMetadata, Source } from "./primitives";
 import type { LLMTokenUsage } from "@/core/usage/types";
 import type { stepName as AggregationStepName } from "../../aggregation/steps.config";
 import type { stepName as DigestionStepName } from "../../digestion/steps.config";
@@ -37,6 +37,7 @@ interface StepRequest<TContext = Record<string, unknown>> {
   instructions: string;
   numberOfBlobs: BlobsCount;
   lengthRange: LengthRange;
+  modelSelection: ModelSelection;
   context: TContext;
 }
 
@@ -60,6 +61,8 @@ interface PipelineRequest {
   numberOfBlobs: BlobsCount;
   /** Target length for generated content */
   lengthRange: LengthRange;
+  /** AI Model selected for article generation */
+  modelSelection: ModelSelection;
   /** Detailed processing instructions */
   instructions: string;
   /** Optional user-provided headline override */
