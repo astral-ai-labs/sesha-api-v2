@@ -21,7 +21,7 @@ import { draftArticle } from "./steps/05-draft-article";
 import { reviseArticle } from "./steps/06-revise-article";
 import { addSourceAttribution } from "./steps/07-source-attribution";
 import { applyColorCoding } from "./steps/08-apply-color-coding";
-// import { detectRips } from "./steps/09-detect-rips";
+import { detectRips } from "./steps/09-detect-rips";
 import { getStepConfig, stepName } from "./steps.config";
 import { getArticleAsPipelineRequest, createRunSkeleton, updateArticleStatus, updateArticleStatusAndUsage, getCurrentUsageAndCost, finalizeDraft } from "../common/operations";
 import { createVerboseLogger } from "../common/utils";
@@ -301,32 +301,22 @@ export default inngest.createFunction(
     });
 
     // Update status and accumulate usage after step 8
-    // TODO: add back when we reimplement the rip step
-    // await step.run("update-status-usage-90", async () => {
-    //   return await updateArticleStatusAndUsage(articleId, "90%", colorCodedArticle.usage);
-    // });
+    await step.run("update-status-usage-90", async () => {
+      return await updateArticleStatusAndUsage(articleId, "90%", colorCodedArticle.usage);
+    });
 
     // 1️⃣3️⃣ Detect rips (sequential, final step) -----
-    // stepName = "09-detect-rips";
-    // const ripAnalysis = await step.run(stepName, async () => {
-    //   const request = {
-    //     ...baseStepRequest,
-    //     sources: pipelineRequest.sources,
-    //     context: {
-    //       colorCodedArticle: colorCodedArticle.output.richContent,
-    //     },
-    //   };
-    //   return await detectRips(request, getStepConfig(stepName, modelSelection), verboseLogger);
-    // });
-
-    // TODO: Remove when we reimplement the step
-    const ripAnalysis = {
-      output: {
-        overallRipScore: 0,
-        overallRipAnalysis: "",
-        ripComparisons: [],
-      },
-    };
+    stepName = "09-detect-rips";
+    const ripAnalysis = await step.run(stepName, async () => {
+      const request = {
+        ...baseStepRequest,
+        sources: pipelineRequest.sources,
+        context: {
+          colorCodedArticle: colorCodedArticle.output.richContent,
+        },
+      };
+      return await detectRips(request, getStepConfig(stepName, modelSelection), verboseLogger);
+    });
 
     const formattedBlobs = finalizedHeadlinesAndBlobs.output.finalizedBlobs.join("\n");
 
@@ -347,7 +337,7 @@ export default inngest.createFunction(
 
     // Final step: accumulate final usage and mark completed
     const finalResult = await step.run("finalize-completed", async () => {
-      return await updateArticleStatusAndUsage(articleId, "completed", colorCodedArticle.usage);
+      return await updateArticleStatusAndUsage(articleId, "completed", ripAnalysis.usage);
     });
 
     // Send completion email

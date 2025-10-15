@@ -1,50 +1,45 @@
-import * as cheerio from "cheerio";
-import { LexicalNode, TextNode, ParagraphNode } from "lexical";
-
 /**
  * extractLexicalDisplayText
  *
- * Extracts text from color-coded HTML exactly as Lexical will display it.
- * Uses the same cheerio parsing logic as Step 8 to ensure text matching consistency.
+ * Extracts text from Lexical JSON format exactly as it will be displayed.
+ * Parses the JSON structure and extracts all text nodes.
  *
- * @param colorCodedHtml - HTML with color-coded spans from Step 8
+ * @param richContent - Lexical JSON string from Step 8
  * @returns Clean text string that matches Lexical's text content
  */
 function extractLexicalDisplayText(richContent: string): string {
   try {
     // Parse Lexical JSON format
     const lexicalData = JSON.parse(richContent);
-    
+
     const textParts: string[] = [];
-    
-    // Extract text from Lexical nodes
-    function extractTextFromNode(node: LexicalNode): void {
-      if (node instanceof TextNode) {
-        textParts.push(node.getTextContent());
-      } else if (node instanceof ParagraphNode) {
-        node.getChildren().forEach(extractTextFromNode);
+
+    // Recursively extract text from Lexical JSON nodes
+    function extractTextFromNode(node: { type?: string; text?: string; children?: unknown[] }): void {
+      if (!node) return;
+
+      // If this is a text node, extract the text
+      if (node.type === "text" && node.text) {
+        textParts.push(node.text);
+      }
+
+      // If this node has children, recursively process them
+      if (node.children && Array.isArray(node.children)) {
+        node.children.forEach((child) => extractTextFromNode(child as { type?: string; text?: string; children?: unknown[] }));
       }
     }
-    
+
     // Start extraction from root
-    if (lexicalData.root && lexicalData.root.children) {
-      lexicalData.root.getChildren().forEach(extractTextFromNode);
+    if (lexicalData.root) {
+      extractTextFromNode(lexicalData.root);
     }
-    
-    return textParts.join(" ").replace(/\s+/g, " ").trim();
-  } catch {
-    // Fallback: if it's HTML instead of Lexical JSON
-    const $ = cheerio.load(richContent);
-    const textParts: string[] = [];
 
-    $("p").each((_, p) => {
-      const text = $(p).text().trim();
-      if (text) {
-        textParts.push(text);
-      }
-    });
-
+    // Join with spaces and normalize whitespace
     return textParts.join(" ").replace(/\s+/g, " ").trim();
+  } catch (error) {
+    console.error("Failed to extract text from Lexical JSON:", error);
+    // Return empty string if parsing fails
+    return "";
   }
 }
 
