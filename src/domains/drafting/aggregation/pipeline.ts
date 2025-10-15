@@ -336,7 +336,7 @@ export default inngest.createFunction(
 
     // Final step: accumulate final usage and mark completed
     const finalResult = await step.run("finalize-completed", async () => {
-      return await updateArticleStatusAndUsage(articleId, "completed", colorCodedArticle.usage);
+      return await updateArticleStatusAndUsage(articleId, "completed", ripAnalysis.usage);
     });
 
     // Send completion email
