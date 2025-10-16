@@ -45,23 +45,14 @@ Source: "The study found 75% of respondents supported the policy."
 Article: "Recent research indicates that three-quarters of those surveyed favored the new policy approach."
 → NOT PLAGIARISM: Facts presented in new context and wording
 
-RESPONSE FORMAT:
-You must respond with valid JSON in exactly this format:
-{
-  "overallRipAnalysis": "Your detailed analysis of the article's originality vs source similarity",
-  "overallRipScore": 0-100,
-  "ripComparisons": [
-    {
-      "articleQuote": "exact text from article",
-      "sourceQuote": "exact text from source", 
-      "sourceNumber": 1-6,
-      "ripAnalysis": "why this constitutes a rip"
-    }
-  ]
-}
+SCORING GUIDELINES:
+- 0-20: Original content with proper attribution
+- 21-40: Some similarity but generally acceptable
+- 41-60: Moderate concerns about paraphrasing
+- 61-80: High similarity, significant plagiarism
+- 81-100: Major plagiarism issues
 
-If you find no rips, use an empty array for quoteComparisons.
-Score meanings: 0-20 (original), 21-40 (some similarity), 41-60 (moderate concerns), 61-80 (high similarity), 81-100 (major plagiarism).
+If you find no plagiarism, return an empty array for ripComparisons and a low score (0-20).
 
 ANALYSIS REQUIREMENTS:
 1. **Be Comprehensive**: Analyze the ENTIRE article systematically, paragraph by paragraph

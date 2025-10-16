@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Internal Modules ----
 import { inngest } from "@/core/inngest/client";
-import type { DraftType, LengthRange, BlobsCount } from "@/domains/drafting/common/types/primitives";
+import type { DraftType, LengthRange, BlobsCount, ModelSelection } from "@/domains/drafting/common/types/primitives";
 
 /* ==========================================================================*/
 // Types & Interfaces
@@ -27,6 +27,7 @@ interface TriggerRequest {
   ingestionType: DraftType;
   lengthRange: LengthRange;
   numberOfBlobs: BlobsCount;
+  modelSelection: ModelSelection;
   verbose?: boolean;
 }
 
@@ -63,6 +64,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Number of blobs is required" }, { status: 400 });
     }
 
+    if (!body.modelSelection) {
+      return NextResponse.json({ error: "Model selection is required" }, { status: 400 });
+    }
+
     // 2️⃣ Determine event name based on ingestion type -----
     const eventName = body.ingestionType === "digest" ? "drafting/trigger/digestion" : "drafting/trigger/aggregation";
 
@@ -77,6 +82,7 @@ export async function POST(request: NextRequest) {
           draftType: body.ingestionType,
           lengthRange: body.lengthRange,
           numberOfBlobs: body.numberOfBlobs,
+          modelSelection: body.modelSelection,
         },
         verbose: body.verbose || true,
       },

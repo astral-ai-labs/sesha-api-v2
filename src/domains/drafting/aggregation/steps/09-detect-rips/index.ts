@@ -52,12 +52,14 @@ const RipAnalysisSchema = z.object({
  * Detect Rips in final article based on source attribution
  */
 export async function detectRips(request: DetectRipsRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<DetectRipsResponse> {
-  console.log("request.context.colorCodedArticle", request.context.colorCodedArticle);
+  console.log("request.context.colorCodedArticle length:", request.context.colorCodedArticle?.length || 0);
 
   // 1️⃣ Clean up the article ----
   const colorCleanedArticle = extractLexicalDisplayText(request.context.colorCodedArticle);
 
-  console.log("colorCleanedArticle", colorCleanedArticle);
+  console.log("colorCleanedArticle:", colorCleanedArticle);
+  console.log("colorCleanedArticle length:", colorCleanedArticle.length);
+  console.log("Number of sources:", request.sources.length);
 
   // 2️⃣ Prepare template variables ----
   const userTemplateVariables = {
@@ -71,22 +73,19 @@ export async function detectRips(request: DetectRipsRequest, stepConfig: StepCon
   //  4️⃣ Format the prompts ----
   const formattedSystem = formatPrompt(prompts.systemTemplate, undefined, PromptType.SYSTEM);
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
-  const formattedAssistant = formatPrompt(prompts.assistantTemplate, undefined, PromptType.ASSISTANT);
 
   // 5️⃣ Log final prompts before AI call ----
   verboseLogger?.logStepPrompts(stepConfig.stepName, {
     system: formattedSystem,
     user: formattedUser,
-    assistant: formattedAssistant,
   });
 
   // 7️⃣ Structure the output ----
-
+  // Note: No assistantPrompt - structured output mode handles JSON formatting automatically
   const structuredResult = await simpleGenerateObject({
     model: stepConfig.structuredModel || DEFAULT_STRUCTURED_MODEL,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
-    assistantPrompt: formattedAssistant,
     schema: RipAnalysisSchema,
     temperature: 0.1,
     maxTokens: 4000,

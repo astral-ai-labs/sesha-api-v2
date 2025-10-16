@@ -21,7 +21,7 @@ import { draftArticle } from "./steps/05-draft-article";
 import { reviseArticle } from "./steps/06-revise-article";
 import { addSourceAttribution } from "./steps/07-source-attribution";
 import { applyColorCoding } from "./steps/08-apply-color-coding";
-// import { detectRips } from "./steps/09-detect-rips";
+import { detectRips } from "./steps/09-detect-rips";
 import { getStepConfig, stepName } from "./steps.config";
 import { getArticleAsPipelineRequest, createRunSkeleton, updateArticleStatus, updateArticleStatusAndUsage, getCurrentUsageAndCost, finalizeDraft } from "../common/operations";
 import { createVerboseLogger } from "../common/utils";
@@ -64,7 +64,7 @@ export default inngest.createFunction(
   // Handler
   async ({ event, step, logger, runId }) => {
     // 1️⃣ Extract metadata from event -----
-    const { articleId, userId, draftType, lengthRange } = event.data.request;
+    const { articleId, userId, draftType, lengthRange, modelSelection } = event.data.request;
 
     // 2️⃣ Create verbose logger -----
     const verboseLogger = createVerboseLogger(logger, event.data.verbose, runId);
@@ -111,6 +111,7 @@ export default inngest.createFunction(
       instructions: pipelineRequest.instructions,
       numberOfBlobs: pipelineRequest.numberOfBlobs,
       lengthRange: pipelineRequest.lengthRange,
+      modelSelection: pipelineRequest.modelSelection
     };
 
     // 5️⃣ Extract facts from all sources in parallel -----
@@ -126,7 +127,7 @@ export default inngest.createFunction(
           context: {},
         };
 
-        const result = await extractFacts(singleSourceRequest, getStepConfig(stepName), verboseLogger);
+        const result = await extractFacts(singleSourceRequest, getStepConfig(stepName, modelSelection), verboseLogger);
 
         return {
           sourceNumber: source.number,
@@ -164,7 +165,7 @@ export default inngest.createFunction(
           },
         };
 
-        const result = await extractFactsConditional(singleSourceRequest, getStepConfig(stepName), verboseLogger);
+        const result = await extractFactsConditional(singleSourceRequest, getStepConfig(stepName, modelSelection), verboseLogger);
 
         return {
           sourceNumber: source.number,
@@ -199,7 +200,7 @@ export default inngest.createFunction(
           extractedFactsConditionalResults: extractedFactsConditional.extractedFactsConditionalResults as SourceFactsConditionalResult[],
         },
       };
-      return await generateHeadlines(request, getStepConfig(stepName), verboseLogger);
+      return await generateHeadlines(request, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after step 3
@@ -220,7 +221,7 @@ export default inngest.createFunction(
           finalizedBlobs: finalizedHeadlinesAndBlobs.output.finalizedBlobs,
         },
       };
-      return await createOutline(request, getStepConfig(stepName), verboseLogger);
+      return await createOutline(request, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after step 4
@@ -242,7 +243,7 @@ export default inngest.createFunction(
           createdOutline: createdOutline.output.createdOutline,
         },
       };
-      return await draftArticle(request, getStepConfig(stepName), verboseLogger);
+      return await draftArticle(request, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after step 5
@@ -260,7 +261,7 @@ export default inngest.createFunction(
           draftedArticle: draftedArticle.output.draftedArticle,
         },
       };
-      return await reviseArticle(request, getStepConfig(stepName), verboseLogger);
+      return await reviseArticle(request, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after step 6
@@ -278,7 +279,7 @@ export default inngest.createFunction(
           revisedArticle: revisedArticle.output.revisedArticle,
         },
       };
-      return await addSourceAttribution(request, getStepConfig(stepName), verboseLogger);
+      return await addSourceAttribution(request, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after step 7
@@ -296,36 +297,26 @@ export default inngest.createFunction(
           attributedArticle: attributedArticle.output.attributedArticle,
         },
       };
-      return await applyColorCoding(request, getStepConfig(stepName), verboseLogger);
+      return await applyColorCoding(request, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after step 8
-    // TODO: add back when we reimplement the rip step
-    // await step.run("update-status-usage-90", async () => {
-    //   return await updateArticleStatusAndUsage(articleId, "90%", colorCodedArticle.usage);
-    // });
+    await step.run("update-status-usage-90", async () => {
+      return await updateArticleStatusAndUsage(articleId, "90%", colorCodedArticle.usage);
+    });
 
     // 1️⃣3️⃣ Detect rips (sequential, final step) -----
-    // stepName = "09-detect-rips";
-    // const ripAnalysis = await step.run(stepName, async () => {
-    //   const request = {
-    //     ...baseStepRequest,
-    //     sources: pipelineRequest.sources,
-    //     context: {
-    //       colorCodedArticle: colorCodedArticle.output.richContent,
-    //     },
-    //   };
-    //   return await detectRips(request, getStepConfig(stepName), verboseLogger);
-    // });
-
-    // TODO: Remove when we reimplement the step
-    const ripAnalysis = {
-      output: {
-        overallRipScore: 0,
-        overallRipAnalysis: "",
-        ripComparisons: [],
-      },
-    };
+    stepName = "09-detect-rips";
+    const ripAnalysis = await step.run(stepName, async () => {
+      const request = {
+        ...baseStepRequest,
+        sources: pipelineRequest.sources,
+        context: {
+          colorCodedArticle: colorCodedArticle.output.richContent,
+        },
+      };
+      return await detectRips(request, getStepConfig(stepName, modelSelection), verboseLogger);
+    });
 
     const formattedBlobs = finalizedHeadlinesAndBlobs.output.finalizedBlobs.join("\n");
 
@@ -346,7 +337,7 @@ export default inngest.createFunction(
 
     // Final step: accumulate final usage and mark completed
     const finalResult = await step.run("finalize-completed", async () => {
-      return await updateArticleStatusAndUsage(articleId, "completed", colorCodedArticle.usage);
+      return await updateArticleStatusAndUsage(articleId, "completed", ripAnalysis.usage);
     });
 
     // Send completion email

@@ -21,7 +21,7 @@ import { ModelPricingMap } from "./types";
  * Update this map when Anthropic/OpenAI pricing or model names change.
  */
 const MODEL_PRICING: ModelPricingMap = {
-  // Claude 3.5 -----
+  // [DEPRECATED] Claude 3.5 -----
   "claude-3-5-sonnet": { inputCostPerMToken: 3, outputCostPerMToken: 15 },
 
   // Claude 3.7 -----
@@ -33,8 +33,14 @@ const MODEL_PRICING: ModelPricingMap = {
   // Claude 4 Opus -----
   "claude-4-opus": { inputCostPerMToken: 15, outputCostPerMToken: 75 },
 
-  // Claude 3 Opus -----
-  "claude-3-opus": { inputCostPerMToken: 15, outputCostPerMToken: 75 },
+  // Claude 4.1 Opus -----
+  "claude-4-1-opus": { inputCostPerMToken: 15, outputCostPerMToken: 75 },
+
+  // Claude 4.5 Sonnet -----
+  "claude-4-5-sonnet": { inputCostPerMToken: 3, outputCostPerMToken: 15 },
+
+  // [DEPRECATED] Claude 3 Opus -----
+  // "claude-3-opus": { inputCostPerMToken: 15, outputCostPerMToken: 75 },
 
   // Claude 3.5 Haiku -----
   "claude-3-5-haiku": { inputCostPerMToken: 0.8, outputCostPerMToken: 4 },

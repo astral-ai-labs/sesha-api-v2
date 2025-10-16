@@ -3,7 +3,7 @@
 /* ==========================================================================*/
 
 // Core (App-wide) -----
-import { ingestionTypeEnum, lengthEnum, blobsEnum } from "@/core/db/schema";
+import { ingestionTypeEnum, lengthEnum, blobsEnum, modelEnum } from "@/core/db/schema";
 
 /* ==========================================================================*/
 // Low Level Types
@@ -12,6 +12,7 @@ import { ingestionTypeEnum, lengthEnum, blobsEnum } from "@/core/db/schema";
 type DraftType = (typeof ingestionTypeEnum.enumValues)[number];
 type LengthRange = (typeof lengthEnum.enumValues)[number];
 type BlobsCount = (typeof blobsEnum.enumValues)[number];
+type ModelSelection = (typeof modelEnum.enumValues)[number];
 
 /**
  * Comparison of a quote from the article and a quote from a source
@@ -76,10 +77,12 @@ interface RequestMetadata {
   numberOfBlobs: BlobsCount;
   /** Length range for the article */
   lengthRange: LengthRange;
+  /** AI model for article generation */
+  modelSelection: ModelSelection;
 }
 
 /* ==========================================================================*/
 // Public API
 /* ==========================================================================*/
 
-export type { DraftType, LengthRange, BlobsCount, SourceOriginType, Source, SourceFlags, RequestMetadata, RipQuoteComparison };
+export type { DraftType, LengthRange, BlobsCount, ModelSelection, SourceOriginType, Source, SourceFlags, RequestMetadata, RipQuoteComparison };

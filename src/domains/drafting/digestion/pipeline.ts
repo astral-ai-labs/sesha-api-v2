@@ -57,7 +57,7 @@ export default inngest.createFunction(
   // Handler
   async ({ event, step, logger, runId }) => {
     // 1️⃣ Extract metadata from event -----
-    const { articleId, userId, draftType, lengthRange } = event.data.request;
+    const { articleId, userId, draftType, lengthRange, modelSelection } = event.data.request;
 
     // 2️⃣ Create verbose logger -----
     const verboseLogger = createVerboseLogger(logger, event.data.verbose, runId);
@@ -106,6 +106,7 @@ export default inngest.createFunction(
       instructions: pipelineRequest.instructions,
       numberOfBlobs: pipelineRequest.numberOfBlobs,
       lengthRange: pipelineRequest.lengthRange,
+      modelSelection: pipelineRequest.modelSelection
     };
 
     // 6️⃣ Extract facts from sources -----
@@ -117,7 +118,7 @@ export default inngest.createFunction(
         context: {},
       };
 
-      return await extractFacts(extractFactsRequest, getStepConfig(stepName), verboseLogger);
+      return await extractFacts(extractFactsRequest, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after step 1
@@ -137,7 +138,7 @@ export default inngest.createFunction(
         },
       };
 
-      return await summarizeFacts(summarizeFactsRequest, getStepConfig(stepName), verboseLogger);
+      return await summarizeFacts(summarizeFactsRequest, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after step 2
@@ -156,7 +157,7 @@ export default inngest.createFunction(
           extractedFactsSummary: summarizedFacts.output.extractedFactsSummary,
         },
       };
-      return await generateHeadlines(finalizedHeadlinesAndBlobsRequest, getStepConfig(stepName), verboseLogger);
+      return await generateHeadlines(finalizedHeadlinesAndBlobsRequest, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after step 3
@@ -173,7 +174,7 @@ export default inngest.createFunction(
           ...baseStepRequest,
           context: {},
         };
-        return await digestVerbatimConditional(verbatimRequest, getStepConfig(stepName), verboseLogger);
+        return await digestVerbatimConditional(verbatimRequest, getStepConfig(stepName, modelSelection), verboseLogger);
       });
 
       const formattedBlobsVerbatim = finalizedHeadlinesAndBlobs.output.finalizedBlobs.join("\n");
@@ -239,7 +240,7 @@ export default inngest.createFunction(
           finalizedBlobs: finalizedHeadlinesAndBlobs.output.finalizedBlobs,
         },
       };
-      return await createOutline(createOutlineRequest, getStepConfig(stepName), verboseLogger);
+      return await createOutline(createOutlineRequest, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after step 4
@@ -260,7 +261,7 @@ export default inngest.createFunction(
           createdOutline: createdOutline.output.createdOutline,
         },
       };
-      return await draftArticle(draftArticleRequest, getStepConfig(stepName), verboseLogger);
+      return await draftArticle(draftArticleRequest, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after major step (drafting)
@@ -277,7 +278,7 @@ export default inngest.createFunction(
           draftedArticle: draftedArticle.output.draftedArticle,
         },
       };
-      return await reviseArticle(reviseArticleRequest, getStepConfig(stepName), verboseLogger);
+      return await reviseArticle(reviseArticleRequest, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     // Update status and accumulate usage after step 6
@@ -294,7 +295,7 @@ export default inngest.createFunction(
           revisedArticle: revisedArticle.output.revisedArticle,
         },
       };
-      return await addSourceAttribution(addSourceAttributionRequest, getStepConfig(stepName), verboseLogger);
+      return await addSourceAttribution(addSourceAttributionRequest, getStepConfig(stepName, modelSelection), verboseLogger);
     });
 
     const formattedBlobs = finalizedHeadlinesAndBlobs.output.finalizedBlobs.join("\n");
