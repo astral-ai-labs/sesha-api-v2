@@ -55,7 +55,9 @@ export async function extractFacts(request: ExtractFactsRequest, stepConfig: Ste
 
   // 5️⃣ Generate AI response -----
   const aiResult = await simpleGenerateText({
-    model: stepConfig.model,
+    // TODO: Change
+    // model: stepConfig.model,
+    model: "claude-sonnet-4-5-20250929",
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,

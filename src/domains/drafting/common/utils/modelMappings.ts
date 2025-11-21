@@ -17,7 +17,8 @@ import type { ModelSelection } from "../types/primitives";
 export const CLAUDE_MODEL_MAPPING: Record<ModelSelection, string> = {
   "claude-3.7": "claude-3-7-sonnet-20250219",
   "claude-4": "claude-sonnet-4-20250514",
-  "claude-4.5": "claude-sonnet-4-5-20250929"
+  "claude-4.5": "claude-sonnet-4-5-20250929",
+  "claude-4.5-claude-4.0": "claude-sonnet-4-20250514"
 } as const;
 
 /**
@@ -28,6 +29,7 @@ export const STRUCTURED_MODEL_MAPPING: Record<ModelSelection, string> = {
     "claude-3.7": "gpt-4o",
     "claude-4": "gpt-4o",
     "claude-4.5": "gpt-4o",
+    "claude-4.5-claude-4.0": "gpt-4o"
   } as const;
 
 /* ==========================================================================*/

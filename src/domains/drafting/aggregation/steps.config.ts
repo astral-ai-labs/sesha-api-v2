@@ -6,7 +6,6 @@
 
 // Internal Modules ----
 import type { StepConfig } from "../common/types/runner";
-import { DEFAULT_CLAUDE_MODEL as DEFAULT_MODEL, DEFAULT_STRUCTURED_MODEL } from "../common/defaults";
 import { getClaudeModel, getStructuredModel } from "../common/utils/modelMappings";
 import type { ModelSelection } from "../common/types/primitives";
 

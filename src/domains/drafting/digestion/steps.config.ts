@@ -6,7 +6,7 @@
 
 // Internal Modules ----
 import type { StepConfig } from "../common/types/runner";
-import { DEFAULT_CLAUDE_MODEL as DEFAULT_MODEL, DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS } from "../common/defaults";
+import { DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS } from "../common/defaults";
 import { getClaudeModel } from "../common/utils/modelMappings";
 import type { ModelSelection } from "../common/types/primitives";
 

@@ -51,7 +51,9 @@ async function summarizeFacts(request: SummarizeFactsRequest, stepConfig: StepCo
 
   // 4️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    model: stepConfig.model,
+    // TODO: Change
+    model: "claude-sonnet-4-5-20250929",
+    // model: stepConfig.model,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
