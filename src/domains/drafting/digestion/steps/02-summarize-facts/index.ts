@@ -70,7 +70,7 @@ async function summarizeFacts(request: SummarizeFactsRequest, stepConfig: StepCo
   });
 
   // 5️⃣ Structure response with usage tracking ----
-  const response = createSuccessResponse({ extractedFactsSummary: aiResult.text }, stepConfig.model, aiResult.usage);
+  const response = createSuccessResponse({ extractedFactsSummary: aiResult.text }, model, aiResult.usage);
 
   // 6️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);

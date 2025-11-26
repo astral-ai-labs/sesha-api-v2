@@ -97,7 +97,7 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
       finalizedHeadline: request.context.userSpecifiedHeadline || structuredResult.object.headline, // If the user specified a headline, use it, otherwise use the generated headline
       finalizedBlobs: structuredResult.object.blobs,
     },
-    stepConfig.model,
+    model,
     combinedUsage
   );
 
