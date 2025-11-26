@@ -18,7 +18,8 @@ export const CLAUDE_MODEL_MAPPING: Record<ModelSelection, string> = {
   "claude-3.7": "claude-3-7-sonnet-20250219",
   "claude-4": "claude-sonnet-4-20250514",
   "claude-4.5": "claude-sonnet-4-5-20250929",
-  "claude-4.5-claude-4.0": "claude-sonnet-4-20250514"
+  "claude-4.5-claude-4.0": "claude-sonnet-4-20250514",
+  "claude-4.5-claude-4.0-headlines": "claude-sonnet-4-20250514",
 } as const;
 
 /**
@@ -26,11 +27,12 @@ export const CLAUDE_MODEL_MAPPING: Record<ModelSelection, string> = {
  * For now, we'll use the same mapping, but you could have different structured models
  */
 export const STRUCTURED_MODEL_MAPPING: Record<ModelSelection, string> = {
-    "claude-3.7": "gpt-4o",
-    "claude-4": "gpt-4o",
-    "claude-4.5": "gpt-4o",
-    "claude-4.5-claude-4.0": "gpt-4o"
-  } as const;
+  "claude-3.7": "gpt-4o",
+  "claude-4": "gpt-4o",
+  "claude-4.5": "gpt-4o",
+  "claude-4.5-claude-4.0": "gpt-4o",
+  "claude-4.5-claude-4.0-headlines": "gpt-4o",
+} as const;
 
 /* ==========================================================================*/
 // Helper Functions
@@ -44,5 +46,17 @@ export function getClaudeModel(modelSelection: ModelSelection): string {
 }
 
 export function getStructuredModel(modelSelection: ModelSelection): string {
-    return STRUCTURED_MODEL_MAPPING[modelSelection];
+  return STRUCTURED_MODEL_MAPPING[modelSelection];
+}
+
+export function determineModelForMultipleModels(modelSelection: ModelSelection, headlineStep: boolean = false): string {
+  if (headlineStep) {
+    if (modelSelection === "claude-4.5-claude-4.0" || modelSelection === "claude-4.5-claude-4.0-headlines") {
+      return "claude-sonnet-4-5-20250929";
+    } else {
+      return "claude-sonnet-4-20250514";
+    }
+  } else {
+    return modelSelection;
+  }
 }

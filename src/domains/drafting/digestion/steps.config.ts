@@ -20,7 +20,7 @@ export type stepName = "01-extract-facts" | "02-summarize-facts" | "03-generate-
 // Step Configurations
 /* ==========================================================================*/
 
-export const STEP_CONFIGS: Record<stepName, Omit<StepConfig, "model">> = {
+export const STEP_CONFIGS: Record<stepName, Omit<StepConfig, "model" | "originalModelSelection">> = {
   "01-extract-facts": {
     stepName: "01-extract-facts",
     temperature: DEFAULT_TEMPERATURE,
@@ -82,6 +82,7 @@ export function getStepConfig(stepName: stepName, modelSelection: ModelSelection
 
   return {
     ...baseConfig,
-    model
+    model,
+    originalModelSelection: modelSelection,
   } as StepConfig;
 }

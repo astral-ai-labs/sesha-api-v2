@@ -18,6 +18,7 @@ import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { ExtractFactsConditionalRequest, ExtractFactsConditionalResponse } from "./types";
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
+import { determineModelForMultipleModels } from "@/domains/drafting/common/utils/modelMappings";
 
 /* ==========================================================================*/
 // Implementation
@@ -59,11 +60,11 @@ async function extractFactsConditional(request: ExtractFactsConditionalRequest, 
     assistant: formattedAssistant
   });
 
+  const model = determineModelForMultipleModels(stepConfig.originalModelSelection, true);
+
   // 6️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    // TODO: Change
-    model: "claude-sonnet-4-5-20250929",
-    // model: stepConfig.model,
+    model: model,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -72,7 +73,7 @@ async function extractFactsConditional(request: ExtractFactsConditionalRequest, 
   });
 
   // 7️⃣ Structure response with usage tracking ----
-  const response = createSuccessResponse({ factsBitSplitting2: aiResult.text }, stepConfig.model, aiResult.usage);
+  const response = createSuccessResponse({ factsBitSplitting2: aiResult.text }, model, aiResult.usage);
   
   // 8️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);

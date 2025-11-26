@@ -13,6 +13,7 @@ import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { ExtractFactsRequest, ExtractFactsResponse } from "@/domains/drafting/digestion/steps/01-extract-facts/types";
 import { StepConfig } from "@/domains/drafting/common/types";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
+import { determineModelForMultipleModels } from "@/domains/drafting/common/utils/modelMappings";
 
 /* ==========================================================================*/
 // Step Configuration
@@ -45,10 +46,11 @@ export async function extractFacts(request: ExtractFactsRequest, stepConfig: Ste
     assistant: formattedAssistant
   });
 
+  const model = determineModelForMultipleModels(stepConfig.originalModelSelection, true);
+
   // 4️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    // TODO: Change
-    model: "claude-sonnet-4-5-20250929",
+    model: model,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -57,7 +59,7 @@ export async function extractFacts(request: ExtractFactsRequest, stepConfig: Ste
   });
 
   // 5️⃣ Structure response with usage tracking ----
-  const response = createSuccessResponse({ extractedFacts: aiResult.text }, stepConfig.model, aiResult.usage);
+  const response = createSuccessResponse({ extractedFacts: aiResult.text }, model, aiResult.usage);
   
   // 6️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);

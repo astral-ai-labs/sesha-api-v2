@@ -17,6 +17,7 @@ import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { SummarizeFactsRequest, SummarizeFactsResponse } from "./types";
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
+import { determineModelForMultipleModels } from "@/domains/drafting/common/utils/modelMappings";
 
 /* ==========================================================================*/
 // Implementation
@@ -46,14 +47,21 @@ async function summarizeFacts(request: SummarizeFactsRequest, stepConfig: StepCo
   verboseLogger?.logStepPrompts(stepConfig.stepName, {
     system: formattedSystem,
     user: formattedUser,
-    assistant: formattedAssistant
+    assistant: formattedAssistant,
   });
+
+  // let model = stepConfig.model;
+  // if (stepConfig.originalModelSelection === "claude-4.5-claude-4.0") {
+  //   model = "claude-sonnet-4-5-20250929";
+  // } else {
+  //   model = stepConfig.model;
+  // }
+
+  const model = determineModelForMultipleModels(stepConfig.originalModelSelection, true);
 
   // 4️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    // TODO: Change
-    model: "claude-sonnet-4-5-20250929",
-    // model: stepConfig.model,
+    model: model,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -63,10 +71,10 @@ async function summarizeFacts(request: SummarizeFactsRequest, stepConfig: StepCo
 
   // 5️⃣ Structure response with usage tracking ----
   const response = createSuccessResponse({ extractedFactsSummary: aiResult.text }, stepConfig.model, aiResult.usage);
-  
+
   // 6️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);
-  
+
   return response;
 }
 

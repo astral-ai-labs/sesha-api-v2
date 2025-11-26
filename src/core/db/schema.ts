@@ -25,7 +25,7 @@ export const headlineAuthorEnum = pgEnum("headline_author", ["human", "ai"]);
 
 export const blobsEnum = pgEnum("blobs", ["1", "2", "3", "4", "5", "6"]);
 export const lengthEnum = pgEnum("length", ["100-250", "400-550", "700-850", "1000-1200"]);
-export const modelEnum = pgEnum("model", ["claude-3.7", "claude-4", "claude-4.5", "claude-4.5-claude-4.0"]);
+export const modelEnum = pgEnum("model", ["claude-3.7", "claude-4", "claude-4.5", "claude-4.5-claude-4.0", "claude-4.5-claude-4.0-headlines"]);
 export const ingestionTypeEnum = pgEnum("ingestion_type", ["digest", "aggregate"]);
 
 /* ==========================================================================*/

@@ -21,6 +21,7 @@ import type { GenerateHeadlinesRequest, GenerateHeadlinesResponse } from "./type
 import type { StepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
 import { DEFAULT_STRUCTURED_MODEL } from "@/domains/drafting/common/defaults";
+import { determineModelForMultipleModels } from "@/domains/drafting/common/utils/modelMappings";
 
 /* ==========================================================================*/
 // Schema
@@ -61,9 +62,11 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
     assistant: formattedAssistant,
   });
 
+  const model = determineModelForMultipleModels(stepConfig.originalModelSelection, true);
+
   // 4️⃣ Generate raw headline and blobs ----
   const rawResult = await simpleGenerateText({
-    model: stepConfig.model,
+    model: model,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,

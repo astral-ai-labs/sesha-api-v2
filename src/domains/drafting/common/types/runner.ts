@@ -27,6 +27,7 @@ interface StepConfig {
   maxTokens: number;
   structuredModel?: string;
   temperatureStructured?: number;
+  originalModelSelection: ModelSelection;
 }
 
 /**
