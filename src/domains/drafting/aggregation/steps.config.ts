@@ -95,6 +95,7 @@ export function getStepConfig(stepName: stepName, modelSelection: ModelSelection
 
   return {
     ...baseConfig,
-    model
+    model,
+    originalModelSelection: modelSelection,
   } as StepConfig;
 }
