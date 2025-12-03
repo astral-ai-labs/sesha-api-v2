@@ -119,6 +119,7 @@ export default inngest.createFunction(
     const inputHeadlineAndBlobGenerationModel = pipelineRequest.inputHeadlineAndBlobGenerationModel;
     const inputArticleWritingModel = pipelineRequest.inputArticleWritingModel;
     const inputRipsDetectionModel = pipelineRequest.inputRipsDetectionModel;
+    const hardcodedRevisionAndSourceAttributionAndColorCodingModel = "sonnet-4.5";
 
     // 5️⃣ Extract facts from all sources in parallel -----
     let stepName: stepName = "01-extract-facts";
@@ -267,12 +268,12 @@ export default inngest.createFunction(
           draftedArticle: draftedArticle.output.draftedArticle,
         },
       };
-      return await reviseArticle(request, getAggregationStepConfig(stepName, inputArticleWritingModel), verboseLogger);
+      return await reviseArticle(request, getAggregationStepConfig(stepName, hardcodedRevisionAndSourceAttributionAndColorCodingModel), verboseLogger);
     });
 
     // Update status and accumulate usage after step 6
     await step.run("update-status-usage-70", async () => {
-      return await updateArticleStatusAndUsage(articleId, "70%", revisedArticle.usage, inputArticleWritingModel);
+      return await updateArticleStatusAndUsage(articleId, "70%", revisedArticle.usage, hardcodedRevisionAndSourceAttributionAndColorCodingModel);
     });
 
     // 1️⃣1️⃣ Add source attribution (sequential) -----
@@ -285,12 +286,12 @@ export default inngest.createFunction(
           revisedArticle: revisedArticle.output.revisedArticle,
         },
       };
-      return await addSourceAttribution(request, getAggregationStepConfig(stepName, inputArticleWritingModel), verboseLogger);
+      return await addSourceAttribution(request, getAggregationStepConfig(stepName, hardcodedRevisionAndSourceAttributionAndColorCodingModel), verboseLogger);
     });
 
     // Update status and accumulate usage after step 7
     await step.run("update-status-usage-90", async () => {
-      return await updateArticleStatusAndUsage(articleId, "90%", attributedArticle.usage, inputArticleWritingModel);
+      return await updateArticleStatusAndUsage(articleId, "90%", attributedArticle.usage, hardcodedRevisionAndSourceAttributionAndColorCodingModel);
     });
 
     // 1️⃣2️⃣ Apply color coding (sequential) -----
@@ -303,12 +304,12 @@ export default inngest.createFunction(
           attributedArticle: attributedArticle.output.attributedArticle,
         },
       };
-      return await applyColorCoding(request, getAggregationStepConfig(stepName, inputArticleWritingModel), verboseLogger);
+      return await applyColorCoding(request, getAggregationStepConfig(stepName, hardcodedRevisionAndSourceAttributionAndColorCodingModel), verboseLogger);
     });
 
     // Update status and accumulate usage after step 8
     await step.run("update-status-usage-90", async () => {
-      return await updateArticleStatusAndUsage(articleId, "90%", colorCodedArticle.usage, inputArticleWritingModel);
+      return await updateArticleStatusAndUsage(articleId, "90%", colorCodedArticle.usage, hardcodedRevisionAndSourceAttributionAndColorCodingModel);
     });
 
     // 1️⃣3️⃣ Detect rips (sequential, final step) -----

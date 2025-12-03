@@ -112,6 +112,7 @@ export default inngest.createFunction(
     const inputFactsExtractionModel = pipelineRequest.inputFactsExtractionModel;
     const inputHeadlineAndBlobGenerationModel = pipelineRequest.inputHeadlineAndBlobGenerationModel;
     const inputArticleWritingModel = pipelineRequest.inputArticleWritingModel;
+    const hardcodedRevisionAndSourceAttributionModel = "sonnet-4.5";
 
     // TODO: ADD RIPS: NOT YET SUPPORTED IN DIGESTION PIPELINE
     // const inputRipsDetectionModel = pipelineRequest.inputRipsDetectionModel;
@@ -285,12 +286,12 @@ export default inngest.createFunction(
           draftedArticle: draftedArticle.output.draftedArticle,
         },
       };
-      return await reviseArticle(reviseArticleRequest, getDigestionStepConfig(stepName, inputArticleWritingModel), verboseLogger);
+      return await reviseArticle(reviseArticleRequest, getDigestionStepConfig(stepName, hardcodedRevisionAndSourceAttributionModel), verboseLogger);
     });
 
     // Update status and accumulate usage after step 6
     await step.run("update-status-usage-90", async () => {
-      return await updateArticleStatusAndUsage(articleId, "90%", revisedArticle.usage, inputArticleWritingModel);
+      return await updateArticleStatusAndUsage(articleId, "90%", revisedArticle.usage, hardcodedRevisionAndSourceAttributionModel);
     });
 
     // 🔟 Add source attribution -----
@@ -302,7 +303,7 @@ export default inngest.createFunction(
           revisedArticle: revisedArticle.output.revisedArticle,
         },
       };
-        return await addSourceAttribution(addSourceAttributionRequest, getDigestionStepConfig(stepName, inputArticleWritingModel), verboseLogger);
+        return await addSourceAttribution(addSourceAttributionRequest, getDigestionStepConfig(stepName, hardcodedRevisionAndSourceAttributionModel), verboseLogger);
     });
 
     const formattedBlobs = finalizedHeadlinesAndBlobs.output.finalizedBlobs.join("\n");
@@ -320,7 +321,7 @@ export default inngest.createFunction(
 
     // Final step: accumulate final usage and mark completed
     const finalResult = await step.run("finalize-completed", async () => {
-      return await updateArticleStatusAndUsage(articleId, "completed", attributedArticle.usage, inputArticleWritingModel);
+      return await updateArticleStatusAndUsage(articleId, "completed", attributedArticle.usage, hardcodedRevisionAndSourceAttributionModel);
     });
 
     // Send completion email
