@@ -16,7 +16,7 @@ import { simpleGenerateObject } from "@/core/ai/call/generateObject";
 
 // Internal Modules ----
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
-import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
 import { DEFAULT_STRUCTURED_MODEL } from "@/domains/drafting/common/defaults";
 import { z } from "zod";
@@ -51,7 +51,7 @@ const RipAnalysisSchema = z.object({
 /**
  * Detect Rips in final article based on source attribution
  */
-export async function detectRips(request: DetectRipsRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<DetectRipsResponse> {
+export async function detectRips(request: DetectRipsRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<DetectRipsResponse> {
   console.log("request.context.colorCodedArticle length:", request.context.colorCodedArticle?.length || 0);
 
   // 1️⃣ Clean up the article ----
@@ -106,7 +106,7 @@ export async function detectRips(request: DetectRipsRequest, stepConfig: StepCon
       overallRipScore: structuredResult.object.overallRipScore,
       ripComparisons: structuredResult.object.ripComparisons,
     },
-    stepConfig.model,
+    stepConfig.modelAndProvider,
     combinedUsage
   );
 

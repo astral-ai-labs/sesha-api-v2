@@ -5,6 +5,8 @@
 // Sections: Types & Interfaces, Public API
 /* ==========================================================================*/
 
+import { ModelAlias } from "@/domains/drafting/common/types/primitives";
+
 /* ==========================================================================*/
 // Types & Interfaces
 /* ==========================================================================*/
@@ -16,26 +18,26 @@ interface LLMTokenUsage {
   outputTokens: number;
   /** Total tokens consumed */
   totalTokens: number;
+
+}
+
+
+interface LLMTokenUsageWithCostAndMetadata extends LLMTokenUsage {
   /** Model identifier used for the request */
-  model?: string;
+  modelAlias: ModelAlias;
+  /** Model ID used for the request */
+  modelId: string;
+  /** Provider identifier used for the request */
+  providerId: string;
   /** Total cost in USD for the call */
   costUsd?: number;
 }
-
 /**
  * Pricing structure for an AI model with input/output token costs.
  */
-type ModelPricing = {
-  inputCostPerMToken: number;
-  outputCostPerMToken: number;
-};
 
-/**
- * Map of model names to their pricing information.
- */
-type ModelPricingMap = Record<string, ModelPricing>;
 
 /* ==========================================================================*/
 // Public API
 /* ==========================================================================*/
-export type { ModelPricing, ModelPricingMap, LLMTokenUsage };
+export type { LLMTokenUsage, LLMTokenUsageWithCostAndMetadata };

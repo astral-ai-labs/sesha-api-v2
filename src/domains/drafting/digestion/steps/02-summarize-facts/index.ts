@@ -15,9 +15,8 @@ import { simpleGenerateText } from "@/core/ai/call";
 // Internal Modules ----
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { SummarizeFactsRequest, SummarizeFactsResponse } from "./types";
-import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
-import { determineModelForMultipleModels } from "@/domains/drafting/common/utils/modelMappings";
 
 /* ==========================================================================*/
 // Implementation
@@ -26,7 +25,7 @@ import { determineModelForMultipleModels } from "@/domains/drafting/common/utils
 /**
  * Create comprehensive summary from extracted facts and source content.
  */
-async function summarizeFacts(request: SummarizeFactsRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<SummarizeFactsResponse> {
+async function summarizeFacts(request: SummarizeFactsRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<SummarizeFactsResponse> {
   // 1️⃣ Prepare template variables ----
   const systemTemplateVariables = {
     instructions: request.instructions,
@@ -50,18 +49,11 @@ async function summarizeFacts(request: SummarizeFactsRequest, stepConfig: StepCo
     assistant: formattedAssistant,
   });
 
-  // let model = stepConfig.model;
-  // if (stepConfig.originalModelSelection === "claude-4.5-claude-4.0") {
-  //   model = "claude-sonnet-4-5-20250929";
-  // } else {
-  //   model = stepConfig.model;
-  // }
-
-  const model = determineModelForMultipleModels(stepConfig.originalModelSelection, true);
 
   // 4️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    model: model,
+    model: stepConfig.modelAndProvider.modelId,
+    provider: stepConfig.modelAndProvider.provider,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -70,7 +62,7 @@ async function summarizeFacts(request: SummarizeFactsRequest, stepConfig: StepCo
   });
 
   // 5️⃣ Structure response with usage tracking ----
-  const response = createSuccessResponse({ extractedFactsSummary: aiResult.text }, model, aiResult.usage);
+  const response = createSuccessResponse({ extractedFactsSummary: aiResult.text }, stepConfig.modelAndProvider, aiResult.usage);
 
   // 6️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);

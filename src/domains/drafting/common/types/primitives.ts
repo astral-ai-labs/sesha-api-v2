@@ -2,6 +2,9 @@
 // Imports
 /* ==========================================================================*/
 
+// External Packages ---
+import type { Provider } from "ai";
+
 // Core (App-wide) -----
 import { ingestionTypeEnum, lengthEnum, blobsEnum, modelEnum } from "@/core/db/schema";
 
@@ -12,7 +15,9 @@ import { ingestionTypeEnum, lengthEnum, blobsEnum, modelEnum } from "@/core/db/s
 type DraftType = (typeof ingestionTypeEnum.enumValues)[number];
 type LengthRange = (typeof lengthEnum.enumValues)[number];
 type BlobsCount = (typeof blobsEnum.enumValues)[number];
-type ModelSelection = (typeof modelEnum.enumValues)[number];
+type ModelAlias = (typeof modelEnum.enumValues)[number];
+type ModelAndProvider = { modelAlias: ModelAlias, modelId: string, provider: Provider, providerId: string };  
+type ModelAndProviderAndPricing = { modelAlias: ModelAlias, modelId: string, provider: Provider, providerId: string, inputCostPerMToken: number, outputCostPerMToken: number };
 
 /**
  * Comparison of a quote from the article and a quote from a source
@@ -77,12 +82,10 @@ interface RequestMetadata {
   numberOfBlobs: BlobsCount;
   /** Length range for the article */
   lengthRange: LengthRange;
-  /** AI model for article generation */
-  modelSelection: ModelSelection;
 }
 
 /* ==========================================================================*/
 // Public API
 /* ==========================================================================*/
 
-export type { DraftType, LengthRange, BlobsCount, ModelSelection, SourceOriginType, Source, SourceFlags, RequestMetadata, RipQuoteComparison };
+export type { DraftType, LengthRange, BlobsCount, ModelAlias, ModelAndProvider, ModelAndProviderAndPricing, SourceOriginType, Source, SourceFlags, RequestMetadata, RipQuoteComparison };

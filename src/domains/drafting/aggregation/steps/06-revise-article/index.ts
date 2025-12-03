@@ -16,7 +16,7 @@ import { simpleGenerateText } from "@/core/ai/call";
 // Internal Modules ----
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { ReviseArticleRequest, ReviseArticleResponse } from "./types";
-import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
@@ -26,7 +26,7 @@ import type { VerboseLogger } from "@/domains/drafting/common/utils";
 /**
  * Revise aggregated article with three specific edits for clarity and readability.
  */
-async function reviseArticle(request: ReviseArticleRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<ReviseArticleResponse> {
+async function reviseArticle(request: ReviseArticleRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<ReviseArticleResponse> {
   // 1️⃣ Prepare template variables ----
   const userTemplateVariables = {
     sources: request.sources,
@@ -49,7 +49,8 @@ async function reviseArticle(request: ReviseArticleRequest, stepConfig: StepConf
 
   // 3️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    model: stepConfig.model,
+    model: stepConfig.modelAndProvider.modelId,
+    provider: stepConfig.modelAndProvider.provider,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -58,7 +59,7 @@ async function reviseArticle(request: ReviseArticleRequest, stepConfig: StepConf
   });
 
   // 4️⃣ Structure response with usage tracking ----
-  const response = createSuccessResponse({ revisedArticle: aiResult.text }, stepConfig.model, aiResult.usage);
+  const response = createSuccessResponse({ revisedArticle: aiResult.text }, stepConfig.modelAndProvider, aiResult.usage);
   
   // 5️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);

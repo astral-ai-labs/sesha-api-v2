@@ -11,9 +11,8 @@ import { simpleGenerateText } from "@/core/ai/call";
 // Internal Modules ----
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { ExtractFactsRequest, ExtractFactsResponse } from "@/domains/drafting/digestion/steps/01-extract-facts/types";
-import { StepConfig } from "@/domains/drafting/common/types";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
-import { determineModelForMultipleModels } from "@/domains/drafting/common/utils/modelMappings";
 
 /* ==========================================================================*/
 // Step Configuration
@@ -26,7 +25,7 @@ import { determineModelForMultipleModels } from "@/domains/drafting/common/utils
 /**
  * Extract facts from source content using AI analysis.
  */
-export async function extractFacts(request: ExtractFactsRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<ExtractFactsResponse> {
+export async function extractFacts(request: ExtractFactsRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<ExtractFactsResponse> {
   // 1️⃣ Prepare template variables ----
   const userTemplateVariables = {
     source: request.sources[0],
@@ -46,11 +45,10 @@ export async function extractFacts(request: ExtractFactsRequest, stepConfig: Ste
     assistant: formattedAssistant
   });
 
-  const model = determineModelForMultipleModels(stepConfig.originalModelSelection, true);
-
   // 4️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    model: model,
+    model: stepConfig.modelAndProvider.modelId,
+    provider: stepConfig.modelAndProvider.provider,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -59,7 +57,7 @@ export async function extractFacts(request: ExtractFactsRequest, stepConfig: Ste
   });
 
   // 5️⃣ Structure response with usage tracking ----
-  const response = createSuccessResponse({ extractedFacts: aiResult.text }, model, aiResult.usage);
+  const response = createSuccessResponse({ extractedFacts: aiResult.text }, stepConfig.modelAndProvider, aiResult.usage);
   
   // 6️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);

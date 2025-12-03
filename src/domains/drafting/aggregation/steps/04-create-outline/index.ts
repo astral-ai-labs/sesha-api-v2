@@ -16,7 +16,7 @@ import { simpleGenerateText } from "@/core/ai/call";
 // Internal Modules ----
 import { createSuccessResponse, formatHeadlinesBlobs } from "@/domains/drafting/common/utils";
 import type { CreateOutlineRequest, CreateOutlineResponse } from "./types";
-import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
@@ -223,7 +223,7 @@ KEY POINTS IN ORDER:
 /**
  * Create structural outline for aggregated article from source(s).
  */
-async function createOutline(request: CreateOutlineRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<CreateOutlineResponse> {
+async function createOutline(request: CreateOutlineRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<CreateOutlineResponse> {
   // 1️⃣ Prepare sources with combined facts ----
   const sourcesWithFacts = buildSourcesWithFactsSplitting(request.sources, request.context.extractedFactsResults, request.context.extractedFactsConditionalResults);
 
@@ -260,7 +260,8 @@ async function createOutline(request: CreateOutlineRequest, stepConfig: StepConf
 
   // 6️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    model: stepConfig.model,
+    model: stepConfig.modelAndProvider.modelId,
+    provider: stepConfig.modelAndProvider.provider,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -269,7 +270,7 @@ async function createOutline(request: CreateOutlineRequest, stepConfig: StepConf
   });
 
   // 7️⃣ Structure response with usage tracking ----
-  const response = createSuccessResponse({ createdOutline: aiResult.text }, stepConfig.model, aiResult.usage);
+  const response = createSuccessResponse({ createdOutline: aiResult.text }, stepConfig.modelAndProvider, aiResult.usage);
   
   // 8️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);

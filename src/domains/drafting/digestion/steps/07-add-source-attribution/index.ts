@@ -16,7 +16,7 @@ import { simpleGenerateText } from "@/core/ai/call/generateText";
 // Internal Modules ----
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { AddSourceAttributionRequest, AddSourceAttributionResponse } from "./types";
-import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
@@ -26,7 +26,7 @@ import type { VerboseLogger } from "@/domains/drafting/common/utils";
 /**
  * Format article with proper sentence-per-line structure and clean attribution.
  */
-async function addSourceAttribution(request: AddSourceAttributionRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<AddSourceAttributionResponse> {
+async function addSourceAttribution(request: AddSourceAttributionRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<AddSourceAttributionResponse> {
   // 1️⃣ Prepare template variables ----
   const userTemplateVariables = {
     revisedArticle: request.context.revisedArticle,
@@ -48,7 +48,8 @@ async function addSourceAttribution(request: AddSourceAttributionRequest, stepCo
 
   // 4️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    model: stepConfig.model,
+    model: stepConfig.modelAndProvider.modelId,
+    provider: stepConfig.modelAndProvider.provider,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -62,7 +63,7 @@ async function addSourceAttribution(request: AddSourceAttributionRequest, stepCo
     .trim(); // Remove leading and trailing whitespace
 
   // 6️⃣ Structure response with usage tracking ----
-  const response = createSuccessResponse({ attributedArticle: cleanedText }, stepConfig.model, aiResult.usage);
+  const response = createSuccessResponse({ attributedArticle: cleanedText }, stepConfig.modelAndProvider, aiResult.usage);
   
   // 7️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);

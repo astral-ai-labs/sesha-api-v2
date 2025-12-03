@@ -18,10 +18,9 @@ import { simpleGenerateObject } from "@/core/ai/call/generateObject";
 // Internal Modules ----
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { GenerateHeadlinesRequest, GenerateHeadlinesResponse } from "./types";
-import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
 import { DEFAULT_STRUCTURED_MODEL } from "@/domains/drafting/common/defaults";
-import { determineModelForMultipleModels } from "@/domains/drafting/common/utils/modelMappings";
 
 /* ==========================================================================*/
 // Schema
@@ -39,7 +38,7 @@ const HeadlineAndBlobsSchema = z.object({
 /**
  * Generate punchy headline and engaging content blobs from extracted facts.
  */
-async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<GenerateHeadlinesResponse> {
+async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<GenerateHeadlinesResponse> {
   const userTemplateVariables = {
     numberOfBlobs: request.numberOfBlobs,
     instructions: request.instructions,
@@ -62,11 +61,10 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
     assistant: formattedAssistant,
   });
 
-  const model = determineModelForMultipleModels(stepConfig.originalModelSelection, true);
-
   // 4️⃣ Generate raw headline and blobs ----
   const rawResult = await simpleGenerateText({
-    model: model,
+    model: stepConfig.modelAndProvider.modelId,
+    provider: stepConfig.modelAndProvider.provider,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -97,7 +95,7 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
       finalizedHeadline: request.context.userSpecifiedHeadline || structuredResult.object.headline, // If the user specified a headline, use it, otherwise use the generated headline
       finalizedBlobs: structuredResult.object.blobs,
     },
-    model,
+    stepConfig.modelAndProvider,
     combinedUsage
   );
 

@@ -10,7 +10,7 @@
 /* ==========================================================================*/
 
 // External Packages ---
-import { generateText, LanguageModel } from "ai";
+import { generateText, LanguageModel, Provider } from "ai";
 import { SystemModelMessage, UserModelMessage, AssistantModelMessage } from "ai";
 import { NonRetriableError } from "inngest";
 
@@ -30,6 +30,7 @@ type Message = SystemModelMessage | UserModelMessage | AssistantModelMessage;
  */
 interface GenerateTextConfig {
   model: LanguageModel;
+  provider: Provider;
   systemPrompt?: string;
   userPrompt: string;
   assistantPrompt?: string;
@@ -74,9 +75,9 @@ async function simpleGenerateText(config: GenerateTextConfig): Promise<GenerateT
   // 3️⃣ Generate text -----
   try {
     // Helper function to avoid code duplication
-    const tryGenerate = async (modelProvider: (model: string) => LanguageModel, modelName: string) => {
+    const tryGenerate = async (modelProvider: Provider, modelName: string) => {
       const result = await generateText({
-        model: modelProvider(modelName),
+        model: modelProvider.languageModel(modelName),
         messages,
         temperature: config.temperature,
         maxOutputTokens: config.maxTokens,
@@ -93,11 +94,11 @@ async function simpleGenerateText(config: GenerateTextConfig): Promise<GenerateT
     };
 
     try {
-      // Try primary Claude model
-      return await tryGenerate(anthropic, finalModel);
+      // Try primary model
+      return await tryGenerate(config.provider, finalModel);
     } catch (error: unknown) {
       if (error instanceof Error && error.name === "AI_RetryError") {
-        console.warn(`Primary Claude model failed, falling back to ${FALLBACK_CLAUDE_MODEL}`);
+        console.warn(`Primary model failed, falling back to ${FALLBACK_CLAUDE_MODEL}`);
 
         try {
           // Try fallback Claude model

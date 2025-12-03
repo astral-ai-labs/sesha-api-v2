@@ -5,10 +5,10 @@
 /* ==========================================================================*/
 
 // Internal Modules ----
-import type { StepConfig } from "../common/types/runner";
+import type { BaseStepConfig, FinalizedStepConfig } from "../common/types/runner";
 import { DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS } from "../common/defaults";
-import { getClaudeModel } from "../common/utils/modelMappings";
-import type { ModelSelection } from "../common/types/primitives";
+import { getModelAndProvider, getStructuredModel } from "../common/utils/modelMappings";
+import type { ModelAlias } from "../common/types/primitives";
 
 /* ==========================================================================*/
 // Types
@@ -20,52 +20,68 @@ export type stepName = "01-extract-facts" | "02-summarize-facts" | "03-generate-
 // Step Configurations
 /* ==========================================================================*/
 
-export const STEP_CONFIGS: Record<stepName, Omit<StepConfig, "model" | "originalModelSelection">> = {
+export const STEP_CONFIGS: Record<stepName, BaseStepConfig> = {
   "01-extract-facts": {
     stepName: "01-extract-facts",
     temperature: DEFAULT_TEMPERATURE,
     maxTokens: 2500,
+    model: "sonnet-4.5",
+    useStructuredModel: false,
   },
 
   "02-summarize-facts": {
     stepName: "02-summarize-facts",
     temperature: DEFAULT_TEMPERATURE,
     maxTokens: DEFAULT_MAX_TOKENS,
+    model: "sonnet-4.5",
+    useStructuredModel: false,
   },
   "03-generate-headlines": {
     stepName: "03-generate-headlines",
     temperature: 0.5,
     maxTokens: 500,
+    model: "sonnet-4.5",
+    useStructuredModel: false,
   },
 
   "04-create-outline": {
     stepName: "04-create-outline",
     temperature: 0.6,
     maxTokens: DEFAULT_MAX_TOKENS,
+    model: "sonnet-4",
+    useStructuredModel: false,
   },
 
   "04-digest-verbatim-conditional": {
     stepName: "04-digest-verbatim-conditional",
     temperature: 0.2,
     maxTokens: 4000,
+    model: "sonnet-4.5",
+    useStructuredModel: false,
   },
 
   "05-draft-article": {
     stepName: "05-draft-article",
     temperature: 0.6,
     maxTokens: 3000,
+    model: "sonnet-4",
+    useStructuredModel: false,
   },
 
   "06-revise-article": {
     stepName: "06-revise-article",
     temperature: 0.5,
     maxTokens: 3700,
+    model: "sonnet-4",
+    useStructuredModel: false,
   },
 
   "07-add-source-attribution": {
     stepName: "07-add-source-attribution",
     temperature: 0.2, // Very precise for attribution
     maxTokens: 3700,
+    model: "sonnet-4",
+    useStructuredModel: false,
   },
 } as const;
 
@@ -76,13 +92,20 @@ export const STEP_CONFIGS: Record<stepName, Omit<StepConfig, "model" | "original
 /**
  * Get step configuration with user-selected model
  */
-export function getStepConfig(stepName: stepName, modelSelection: ModelSelection): StepConfig {
+export function getDigestionStepConfig(stepName: stepName, userSpecifiedModel: ModelAlias): FinalizedStepConfig {
   const baseConfig = STEP_CONFIGS[stepName];
-  const model = getClaudeModel(modelSelection);
+  const modelAndProvider = getModelAndProvider(userSpecifiedModel, baseConfig.model);
+
+  if (baseConfig.useStructuredModel) {
+    return {
+      ...baseConfig,
+      modelAndProvider,
+      structuredModel: getStructuredModel(userSpecifiedModel),
+    } as FinalizedStepConfig;
+  }
 
   return {
     ...baseConfig,
-    model,
-    originalModelSelection: modelSelection,
-  } as StepConfig;
+    modelAndProvider,
+  } as FinalizedStepConfig;
 }
