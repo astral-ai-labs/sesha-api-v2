@@ -26,24 +26,33 @@ export const headlineAuthorEnum = pgEnum("headline_author", ["human", "ai"]);
 export const blobsEnum = pgEnum("blobs", ["1", "2", "3", "4", "5", "6"]);
 export const lengthEnum = pgEnum("length", ["100-250", "400-550", "700-850", "1000-1200"]);
 export const modelEnum = pgEnum("model", [
+
   // Grok Models
   "grok-4.1-fast",
   "grok-4-fast",
   "grok-4",
+
   // Haiku Models
   "haiku-4.5",
 
-  // Opus models
+  // Opus Models
   "opus-4",
   "opus-4.1",
   "opus-4.5",
 
-  // Sonnet models
+  // Sonnet Models
   "sonnet-3.7",
   "sonnet-4",
   "sonnet-4.5",
   "sonnet-4.5-sonnet-4.0",
   "sonnet-4.5-sonnet-4.0-headlines",
+]);
+export const modelPresetEnum = pgEnum("model_preset", [
+  "sonnet-4.5-4.0-mix",
+  "opus-4.5-all",
+  "opus-4.5-sonnet-4.0-mix",
+  "opus-4.5-opus-4.0-mix",
+  "sonnet-3.7-all",
 ]);
 export const ingestionTypeEnum = pgEnum("ingestion_type", ["digest", "aggregate"]);
 
@@ -124,6 +133,9 @@ export const articles = pgTable(
     inputBlobs: blobsEnum("input_blobs").notNull(),
     inputLength: lengthEnum("input_length").notNull(),
     inputModel: modelEnum("input_model").default("sonnet-3.7").notNull(),
+
+    // Model preset (nullable - null means custom configuration)
+    inputModelPreset: modelPresetEnum("input_model_preset"),
 
     // New Model Fields - default to same value as inputModel
     inputFactsExtractionModel: modelEnum("input_facts_extraction_model").default("sonnet-3.7").notNull(),
