@@ -54,7 +54,7 @@ async function generateNextSteps(article: string): Promise<GenerateNextStepsResu
 
   // 3️⃣ Generate next steps with Grok ----
   const result = await simpleGenerateText({
-    model: NEXT_STEPS_MODEL.modelId as any,
+    model: NEXT_STEPS_MODEL.modelId as string,
     provider: NEXT_STEPS_MODEL.provider,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
