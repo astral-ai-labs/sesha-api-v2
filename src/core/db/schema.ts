@@ -28,6 +28,7 @@ export const lengthEnum = pgEnum("length", ["100-250", "400-550", "700-850", "10
 export const modelEnum = pgEnum("model", [
 
   // Grok Models
+  "grok-4.1-fast-reasoning",
   "grok-4.1-fast",
   "grok-4-fast",
   "grok-4",

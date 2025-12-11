@@ -1,0 +1,1 @@
+// fetches an article by slug/version and uses Grok 4.1 fast reasoning to suggest next steps
