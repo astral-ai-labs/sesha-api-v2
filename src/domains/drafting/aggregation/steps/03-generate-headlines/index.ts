@@ -18,7 +18,7 @@ import { simpleGenerateObject } from "@/core/ai/call/generateObject";
 // Internal Modules ----
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { GenerateHeadlinesRequest, GenerateHeadlinesResponse } from "./types";
-import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
 import { DEFAULT_STRUCTURED_MODEL } from "@/domains/drafting/common/defaults";
 
@@ -38,7 +38,7 @@ const HeadlineAndBlobsSchema = z.object({
 /**
  * Generate punchy headline and engaging content blobs from source facts.
  */
-async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<GenerateHeadlinesResponse> {
+async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<GenerateHeadlinesResponse> {
   // We need to first add the extractedFactsResults and extractedFactsConditionalResults to the sources
   const sourcesWithFacts = request.sources.map((source) => {
     const extractedFactsResult = request.context.extractedFactsResults.find((result) => result.sourceNumber === source.number);
@@ -73,7 +73,8 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
 
   // 4️⃣ Generate raw headline and blobs ----
   const rawResult = await simpleGenerateText({
-    model: stepConfig.model,
+    model: stepConfig.modelAndProvider.modelId,
+    provider: stepConfig.modelAndProvider.provider,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -104,7 +105,7 @@ async function generateHeadlines(request: GenerateHeadlinesRequest, stepConfig: 
       finalizedHeadline: request.context.userSpecifiedHeadline || structuredResult.object.headline, //If the user specified a headline, use it, otherwise use the generated headline
       finalizedBlobs: structuredResult.object.blobs,
     },
-    stepConfig.model,
+    stepConfig.modelAndProvider,
     combinedUsage
   );
 

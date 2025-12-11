@@ -16,7 +16,7 @@ import { simpleGenerateText } from "@/core/ai/call/generateText";
 // Internal Modules ----
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { ApplyColorCodingRequest, ApplyColorCodingResponse } from "./types";
-import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import { convertHtmlToLexicalJSON } from "./helpers";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
@@ -27,7 +27,7 @@ import type { VerboseLogger } from "@/domains/drafting/common/utils";
 /**
  * Apply color coding to the final article based on source attribution.
  */
-async function applyColorCoding(request: ApplyColorCodingRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<ApplyColorCodingResponse> {
+async function applyColorCoding(request: ApplyColorCodingRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<ApplyColorCodingResponse> {
   // 1️⃣ Prepare template variables ----
   const userTemplateVariables = {
     sources: request.sources,
@@ -50,7 +50,8 @@ async function applyColorCoding(request: ApplyColorCodingRequest, stepConfig: St
 
   // 3️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    model: stepConfig.model,
+    model: stepConfig.modelAndProvider.modelId,
+    provider: stepConfig.modelAndProvider.provider,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -70,7 +71,7 @@ async function applyColorCoding(request: ApplyColorCodingRequest, stepConfig: St
       content: cleanedText,
       richContent: convertHtmlToLexicalJSON(cleanedText), // Rich content is now in Lexical JSON format
     },
-    stepConfig.model,
+    stepConfig.modelAndProvider,
     aiResult.usage
   );
 

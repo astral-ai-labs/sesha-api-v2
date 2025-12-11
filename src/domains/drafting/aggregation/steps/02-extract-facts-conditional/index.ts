@@ -16,7 +16,7 @@ import { simpleGenerateText } from "@/core/ai/call";
 // Internal Modules ----
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
 import type { ExtractFactsConditionalRequest, ExtractFactsConditionalResponse } from "./types";
-import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
@@ -28,7 +28,7 @@ import type { VerboseLogger } from "@/domains/drafting/common/utils";
  * For primary sources: Complete second-half processing from step 01 results.
  * For verbatim/default sources: Return minimal processing (dashes).
  */
-async function extractFactsConditional(request: ExtractFactsConditionalRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<ExtractFactsConditionalResponse> {
+async function extractFactsConditional(request: ExtractFactsConditionalRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<ExtractFactsConditionalResponse> {
   // 1️⃣ Find corresponding facts from step 01 ----
   const correspondingFactsResult = request.context.extractedFactsResults.find((result) => result.sourceNumber === request.sources[0].number);
 
@@ -61,7 +61,8 @@ async function extractFactsConditional(request: ExtractFactsConditionalRequest, 
 
   // 6️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    model: stepConfig.model,
+    model: stepConfig.modelAndProvider.modelId,
+    provider: stepConfig.modelAndProvider.provider,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -70,7 +71,7 @@ async function extractFactsConditional(request: ExtractFactsConditionalRequest, 
   });
 
   // 7️⃣ Structure response with usage tracking ----
-  const response = createSuccessResponse({ factsBitSplitting2: aiResult.text }, stepConfig.model, aiResult.usage);
+  const response = createSuccessResponse({ factsBitSplitting2: aiResult.text }, stepConfig.modelAndProvider, aiResult.usage);
   
   // 8️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);

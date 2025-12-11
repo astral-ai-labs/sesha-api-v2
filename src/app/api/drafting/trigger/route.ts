@@ -27,6 +27,7 @@ interface TriggerRequest {
   ingestionType: DraftType;
   lengthRange: LengthRange;
   numberOfBlobs: BlobsCount;
+
   verbose?: boolean;
 }
 
@@ -62,6 +63,11 @@ export async function POST(request: NextRequest) {
     if (!body.numberOfBlobs) {
       return NextResponse.json({ error: "Number of blobs is required" }, { status: 400 });
     }
+
+    // TODO: remove this once we have a way to select the model
+    // if (!body.inputFactsExtractionModel || !body.inputHeadlineAndBlobGenerationModel || !body.inputArticleWritingModel || !body.inputRipsDetectionModel) {
+    //   return NextResponse.json({ error: "All model fields are required" }, { status: 400 });
+    // }
 
     // 2️⃣ Determine event name based on ingestion type -----
     const eventName = body.ingestionType === "digest" ? "drafting/trigger/digestion" : "drafting/trigger/aggregation";

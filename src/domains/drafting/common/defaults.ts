@@ -1,5 +1,5 @@
-const DEFAULT_CLAUDE_MODEL = "claude-3-7-sonnet-20250219";
-const FALLBACK_CLAUDE_MODEL = "claude-sonnet-4-20250514";
+const DEFAULT_CLAUDE_MODEL = "sonnet-3-7-sonnet-20250219";
+const FALLBACK_CLAUDE_MODEL = "sonnet-sonnet-4-20250514";
 const DEFAULT_STRUCTURED_MODEL = "gpt-4o";
 const DEFAULT_TEMPERATURE = 0.3;
 const DEFAULT_MAX_TOKENS = 3000;

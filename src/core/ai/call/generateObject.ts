@@ -62,7 +62,7 @@ async function simpleGenerateObject<T>(config: GenerateObjectConfig<T>): Promise
       model: openai(finalModel),
       system: config.systemPrompt,
       prompt: config.userPrompt,
-      assistant: config.assistantPrompt,
+      ...(config.assistantPrompt ? { assistant: config.assistantPrompt } : {}),
       schema: config.schema,
       temperature: config.temperature,
       maxOutputTokens: config.maxTokens,
@@ -78,6 +78,9 @@ async function simpleGenerateObject<T>(config: GenerateObjectConfig<T>): Promise
       },
     };
   } catch (error: unknown) {
+    // Log the full error for debugging
+    console.error("Full generateObject error:", error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
     throw new Error(`Structured object generation failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

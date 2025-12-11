@@ -1,4 +1,4 @@
-/* ==========================================================================*/
+  /* ==========================================================================*/
 // index.ts — Create outline step execution
 /* ==========================================================================*/
 // Purpose: Create structural outline for the article with 10+ key points
@@ -16,7 +16,7 @@ import { simpleGenerateText } from "@/core/ai/call/generateText";
 // Internal Modules ----
 import { createSuccessResponse, formatHeadlinesBlobs } from "@/domains/drafting/common/utils";
 import type { CreateOutlineRequest, CreateOutlineResponse } from "./types";
-import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
 
 /* ==========================================================================*/
@@ -26,7 +26,7 @@ import type { VerboseLogger } from "@/domains/drafting/common/utils";
 /**
  * Create structural outline for the article with comprehensive key points.
  */
-async function createOutline(request: CreateOutlineRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<CreateOutlineResponse> {
+async function createOutline(request: CreateOutlineRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<CreateOutlineResponse> {
   // 1️⃣ Prepare template variables ----
   const systemTemplateVariables = {
     extractedFactsSummary: request.context.extractedFactsSummary,
@@ -59,7 +59,8 @@ async function createOutline(request: CreateOutlineRequest, stepConfig: StepConf
 
   // 5️⃣ Generate AI response ----
   const aiResult = await simpleGenerateText({
-    model: stepConfig.model,
+    model: stepConfig.modelAndProvider.modelId,
+    provider: stepConfig.modelAndProvider.provider,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     assistantPrompt: formattedAssistant,
@@ -68,7 +69,7 @@ async function createOutline(request: CreateOutlineRequest, stepConfig: StepConf
   });
 
   // 6️⃣ Structure response with usage tracking ----
-  const response = createSuccessResponse({ createdOutline: aiResult.text }, stepConfig.model, aiResult.usage);
+  const response = createSuccessResponse({ createdOutline: aiResult.text }, stepConfig.modelAndProvider, aiResult.usage);
   
   // 7️⃣ Log step output ----
   verboseLogger?.logStepOutput(stepConfig.stepName, response.output);

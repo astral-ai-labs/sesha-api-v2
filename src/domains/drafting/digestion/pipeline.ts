@@ -18,7 +18,7 @@ import { draftArticle } from "./steps/05-draft-article";
 import { reviseArticle } from "./steps/06-revise-article";
 import { addSourceAttribution } from "./steps/07-add-source-attribution";
 import { digestVerbatimConditional } from "./steps/04-digest-verbatim-conditional";
-import { getStepConfig, stepName } from "./steps.config";
+import { getDigestionStepConfig, stepName } from "./steps.config";
 import { getArticleAsPipelineRequest, createRunSkeleton, updateArticleStatus, updateArticleStatusAndUsage, getCurrentUsageAndCost, finalizeDraft } from "../common/operations";
 import { createVerboseLogger } from "../common/utils";
 
@@ -108,6 +108,15 @@ export default inngest.createFunction(
       lengthRange: pipelineRequest.lengthRange,
     };
 
+    // Fetch the models to use from the database
+    const inputFactsExtractionModel = pipelineRequest.inputFactsExtractionModel;
+    const inputHeadlineAndBlobGenerationModel = pipelineRequest.inputHeadlineAndBlobGenerationModel;
+    const inputArticleWritingModel = pipelineRequest.inputArticleWritingModel;
+    const hardcodedRevisionAndSourceAttributionModel = "sonnet-4.5";
+
+    // TODO: ADD RIPS: NOT YET SUPPORTED IN DIGESTION PIPELINE
+    // const inputRipsDetectionModel = pipelineRequest.inputRipsDetectionModel;
+
     // 6️⃣ Extract facts from sources -----
     let stepName: stepName = "01-extract-facts";
     const extractedFacts = await step.run(stepName, async () => {
@@ -117,13 +126,13 @@ export default inngest.createFunction(
         context: {},
       };
 
-      return await extractFacts(extractFactsRequest, getStepConfig(stepName), verboseLogger);
+      return await extractFacts(extractFactsRequest, getDigestionStepConfig(stepName, inputFactsExtractionModel), verboseLogger);
     });
 
     // Update status and accumulate usage after step 1
     await step.run("update-status-usage-step-1", async () => {
       const progressPercent = isVerbatim ? "30%" : "10%";
-      return await updateArticleStatusAndUsage(articleId, progressPercent, extractedFacts.usage);
+      return await updateArticleStatusAndUsage(articleId, progressPercent, extractedFacts.usage, inputFactsExtractionModel);
     });
 
     // 5️⃣ Summarize extracted facts -----
@@ -137,12 +146,12 @@ export default inngest.createFunction(
         },
       };
 
-      return await summarizeFacts(summarizeFactsRequest, getStepConfig(stepName), verboseLogger);
+      return await summarizeFacts(summarizeFactsRequest, getDigestionStepConfig(stepName, inputFactsExtractionModel), verboseLogger);
     });
 
     // Update status and accumulate usage after step 2
     await step.run("update-status-usage-step-2", async () => {
-      return await updateArticleStatusAndUsage(articleId, isVerbatim ? "60%" : "20%", summarizedFacts.usage);
+      return await updateArticleStatusAndUsage(articleId, isVerbatim ? "60%" : "20%", summarizedFacts.usage, inputFactsExtractionModel);
     });
 
     // 6️⃣ Generate headlines -----
@@ -156,12 +165,12 @@ export default inngest.createFunction(
           extractedFactsSummary: summarizedFacts.output.extractedFactsSummary,
         },
       };
-      return await generateHeadlines(finalizedHeadlinesAndBlobsRequest, getStepConfig(stepName), verboseLogger);
+      return await generateHeadlines(finalizedHeadlinesAndBlobsRequest, getDigestionStepConfig(stepName, inputHeadlineAndBlobGenerationModel), verboseLogger);
     });
 
     // Update status and accumulate usage after step 3
     await step.run("update-status-usage-step-3", async () => {
-      return await updateArticleStatusAndUsage(articleId, isVerbatim ? "80%" : "30%", finalizedHeadlinesAndBlobs.usage);
+      return await updateArticleStatusAndUsage(articleId, isVerbatim ? "80%" : "30%", finalizedHeadlinesAndBlobs.usage, inputHeadlineAndBlobGenerationModel);
     });
 
     // 7️⃣ Handle verbatim flow -----
@@ -173,7 +182,7 @@ export default inngest.createFunction(
           ...baseStepRequest,
           context: {},
         };
-        return await digestVerbatimConditional(verbatimRequest, getStepConfig(stepName), verboseLogger);
+        return await digestVerbatimConditional(verbatimRequest, getDigestionStepConfig(stepName, inputArticleWritingModel), verboseLogger);
       });
 
       const formattedBlobsVerbatim = finalizedHeadlinesAndBlobs.output.finalizedBlobs.join("\n");
@@ -191,7 +200,7 @@ export default inngest.createFunction(
 
       // Final step: accumulate verbatim usage and mark completed
       const finalResult = await step.run("finalize-verbatim-completed", async () => {
-        return await updateArticleStatusAndUsage(articleId, "completed", verbatimResult.usage);
+        return await updateArticleStatusAndUsage(articleId, "completed", verbatimResult.usage, inputArticleWritingModel);
       });
 
       // Send completion email
@@ -239,12 +248,12 @@ export default inngest.createFunction(
           finalizedBlobs: finalizedHeadlinesAndBlobs.output.finalizedBlobs,
         },
       };
-      return await createOutline(createOutlineRequest, getStepConfig(stepName), verboseLogger);
+      return await createOutline(createOutlineRequest, getDigestionStepConfig(stepName, inputArticleWritingModel), verboseLogger);
     });
 
     // Update status and accumulate usage after step 4
     await step.run("update-status-usage-40", async () => {
-      return await updateArticleStatusAndUsage(articleId, "40%", createdOutline.usage);
+      return await updateArticleStatusAndUsage(articleId, "40%", createdOutline.usage, inputArticleWritingModel);
     });
 
     // 8️⃣ Draft article -----
@@ -260,12 +269,12 @@ export default inngest.createFunction(
           createdOutline: createdOutline.output.createdOutline,
         },
       };
-      return await draftArticle(draftArticleRequest, getStepConfig(stepName), verboseLogger);
+      return await draftArticle(draftArticleRequest, getDigestionStepConfig(stepName, inputArticleWritingModel), verboseLogger);
     });
 
     // Update status and accumulate usage after major step (drafting)
     await step.run("update-status-usage-70", async () => {
-      return await updateArticleStatusAndUsage(articleId, "70%", draftedArticle.usage);
+      return await updateArticleStatusAndUsage(articleId, "70%", draftedArticle.usage, inputArticleWritingModel);
     });
 
     // 9️⃣ Revise article -----
@@ -277,12 +286,12 @@ export default inngest.createFunction(
           draftedArticle: draftedArticle.output.draftedArticle,
         },
       };
-      return await reviseArticle(reviseArticleRequest, getStepConfig(stepName), verboseLogger);
+      return await reviseArticle(reviseArticleRequest, getDigestionStepConfig(stepName, hardcodedRevisionAndSourceAttributionModel), verboseLogger);
     });
 
     // Update status and accumulate usage after step 6
     await step.run("update-status-usage-90", async () => {
-      return await updateArticleStatusAndUsage(articleId, "90%", revisedArticle.usage);
+      return await updateArticleStatusAndUsage(articleId, "90%", revisedArticle.usage, hardcodedRevisionAndSourceAttributionModel);
     });
 
     // 🔟 Add source attribution -----
@@ -294,7 +303,7 @@ export default inngest.createFunction(
           revisedArticle: revisedArticle.output.revisedArticle,
         },
       };
-      return await addSourceAttribution(addSourceAttributionRequest, getStepConfig(stepName), verboseLogger);
+        return await addSourceAttribution(addSourceAttributionRequest, getDigestionStepConfig(stepName, hardcodedRevisionAndSourceAttributionModel), verboseLogger);
     });
 
     const formattedBlobs = finalizedHeadlinesAndBlobs.output.finalizedBlobs.join("\n");
@@ -312,7 +321,7 @@ export default inngest.createFunction(
 
     // Final step: accumulate final usage and mark completed
     const finalResult = await step.run("finalize-completed", async () => {
-      return await updateArticleStatusAndUsage(articleId, "completed", attributedArticle.usage);
+      return await updateArticleStatusAndUsage(articleId, "completed", attributedArticle.usage, hardcodedRevisionAndSourceAttributionModel);
     });
 
     // Send completion email

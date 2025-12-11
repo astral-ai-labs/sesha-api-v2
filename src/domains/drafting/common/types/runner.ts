@@ -10,8 +10,8 @@
 /* ==========================================================================*/
 
 // Internal Modules ----
-import type { BlobsCount, LengthRange, RequestMetadata, Source } from "./primitives";
-import type { LLMTokenUsage } from "@/core/usage/types";
+import type { BlobsCount, LengthRange, ModelAlias, ModelAndProvider, RequestMetadata, Source } from "./primitives";
+import type { LLMTokenUsage, LLMTokenUsageWithCostAndMetadata } from "@/core/usage/types";
 import type { stepName as AggregationStepName } from "../../aggregation/steps.config";
 import type { stepName as DigestionStepName } from "../../digestion/steps.config";
 import { articles } from "@/core/db";
@@ -20,13 +20,18 @@ import { articles } from "@/core/db";
 // Step Types
 /* ==========================================================================*/
 
-interface StepConfig {
+interface BaseStepConfig {
   stepName: AggregationStepName | DigestionStepName;
-  model: string;
+  model: ModelAlias;
   temperature: number;
   maxTokens: number;
-  structuredModel?: string;
-  temperatureStructured?: number;
+  useStructuredModel: boolean;
+}
+
+interface FinalizedStepConfig extends Omit<BaseStepConfig, "model" | "useStructuredModel"> {
+  modelAndProvider: ModelAndProvider;
+  structuredModel?: string | undefined;
+  temperatureStructured?: number | undefined;
 }
 
 /**
@@ -46,7 +51,7 @@ interface StepRequest<TContext = Record<string, unknown>> {
 interface StepResponse<TOutput = Record<string, unknown>> {
   success: boolean;
   output: TOutput;
-  usage: LLMTokenUsage[];
+  usage: LLMTokenUsageWithCostAndMetadata[];
 }
 
 /* ==========================================================================*/
@@ -60,6 +65,14 @@ interface PipelineRequest {
   numberOfBlobs: BlobsCount;
   /** Target length for generated content */
   lengthRange: LengthRange;
+  /** AI model for facts extraction */
+  inputFactsExtractionModel: ModelAlias;
+  /** AI model for headline and blob generation */
+  inputHeadlineAndBlobGenerationModel: ModelAlias;
+  /** AI model for article writing */
+  inputArticleWritingModel: ModelAlias;
+  /** AI model for RIPs detection */
+  inputRipsDetectionModel: ModelAlias;
   /** Detailed processing instructions */
   instructions: string;
   /** Optional user-provided headline override */
@@ -67,7 +80,6 @@ interface PipelineRequest {
   /** Source content to process */
   sources: Source[];
 }
-
 
 // ================================================================
 // Article Status and Usage Result
@@ -77,10 +89,12 @@ interface ArticleStatusAndUsageResult {
   article: typeof articles.$inferSelect;
   totalTokenUsage: LLMTokenUsage;
   totalCostUsd: string;
+  modelAlias: ModelAlias;
+  modelId: string;
+  providerId: string;
 }
-
 
 /* ==========================================================================*/
 // Public API
 /* ==========================================================================*/
-export type { StepConfig, ArticleStatusAndUsageResult, StepRequest, StepResponse, PipelineRequest };
+export type { BaseStepConfig, FinalizedStepConfig, ArticleStatusAndUsageResult, StepRequest, StepResponse, PipelineRequest };

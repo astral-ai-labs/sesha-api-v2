@@ -6,7 +6,8 @@
 
 // Internal Modules ----
 import type { StepResponse } from "../types/runner";
-import type { LLMTokenUsage } from "@/core/usage/types";
+import type { LLMTokenUsageWithCostAndMetadata } from "@/core/usage/types";
+import type { ModelAndProvider } from "../types/primitives";
 
 /* ==========================================================================*/
 // Utility Functions
@@ -15,9 +16,11 @@ import type { LLMTokenUsage } from "@/core/usage/types";
 /**
  * Create successful step response with usage tracking.
  */
-export function createSuccessResponse<TOutput>(output: TOutput, model: string, usage: { inputTokens: number; outputTokens: number; totalTokens: number }): StepResponse<TOutput> {
-  const tokenUsage: LLMTokenUsage = {
-    model: model,
+export function createSuccessResponse<TOutput>(output: TOutput, modelAndProvider: ModelAndProvider, usage: { inputTokens: number; outputTokens: number; totalTokens: number }): StepResponse<TOutput> {
+  const tokenUsage: LLMTokenUsageWithCostAndMetadata = {
+    modelAlias: modelAndProvider.modelAlias,
+    modelId: modelAndProvider.modelId,
+    providerId: modelAndProvider.providerId,
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
     totalTokens: usage.totalTokens,

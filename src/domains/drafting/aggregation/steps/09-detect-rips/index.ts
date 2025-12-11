@@ -16,7 +16,7 @@ import { simpleGenerateObject } from "@/core/ai/call/generateObject";
 
 // Internal Modules ----
 import { createSuccessResponse } from "@/domains/drafting/common/utils";
-import type { StepConfig } from "@/domains/drafting/common/types/runner";
+import type { FinalizedStepConfig } from "@/domains/drafting/common/types/runner";
 import type { VerboseLogger } from "@/domains/drafting/common/utils";
 import { DEFAULT_STRUCTURED_MODEL } from "@/domains/drafting/common/defaults";
 import { z } from "zod";
@@ -51,13 +51,12 @@ const RipAnalysisSchema = z.object({
 /**
  * Detect Rips in final article based on source attribution
  */
-export async function detectRips(request: DetectRipsRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<DetectRipsResponse> {
-  console.log("request.context.attributedArticle", request.context.attributedArticle);
+export async function detectRips(request: DetectRipsRequest, stepConfig: FinalizedStepConfig, verboseLogger?: VerboseLogger): Promise<DetectRipsResponse> {
+  console.log("request.context.attributedArticle length:", request.context.attributedArticle?.length || 0);
 
   // 1️⃣ Clean up the article ----
-  // const colorCleanedArticle = extractLexicalDisplayText(request.context.revisedArticle);
-
-  // console.log("inputArticle", colorCleanedArticle);
+  // Note: We use attributedArticle directly (from step 07) instead of colorCodedArticle
+  console.log("Number of sources:", request.sources.length);
 
   // 2️⃣ Prepare template variables ----
   const userTemplateVariables = {
@@ -71,22 +70,19 @@ export async function detectRips(request: DetectRipsRequest, stepConfig: StepCon
   //  4️⃣ Format the prompts ----
   const formattedSystem = formatPrompt(prompts.systemTemplate, undefined, PromptType.SYSTEM);
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
-  const formattedAssistant = formatPrompt(prompts.assistantTemplate, undefined, PromptType.ASSISTANT);
 
   // 5️⃣ Log final prompts before AI call ----
   verboseLogger?.logStepPrompts(stepConfig.stepName, {
     system: formattedSystem,
     user: formattedUser,
-    assistant: formattedAssistant,
   });
 
   // 7️⃣ Structure the output ----
-
+  // Note: No assistantPrompt - structured output mode handles JSON formatting automatically
   const structuredResult = await simpleGenerateObject({
     model: stepConfig.structuredModel || DEFAULT_STRUCTURED_MODEL,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
-    assistantPrompt: formattedAssistant,
     schema: RipAnalysisSchema,
     temperature: 0.1,
     maxTokens: 4000,
@@ -107,7 +103,7 @@ export async function detectRips(request: DetectRipsRequest, stepConfig: StepCon
       overallRipScore: structuredResult.object.overallRipScore,
       ripComparisons: structuredResult.object.ripComparisons,
     },
-    stepConfig.model,
+    stepConfig.modelAndProvider,
     combinedUsage
   );
 
