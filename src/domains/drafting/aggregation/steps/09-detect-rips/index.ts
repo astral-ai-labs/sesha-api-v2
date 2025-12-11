@@ -52,16 +52,16 @@ const RipAnalysisSchema = z.object({
  * Detect Rips in final article based on source attribution
  */
 export async function detectRips(request: DetectRipsRequest, stepConfig: StepConfig, verboseLogger?: VerboseLogger): Promise<DetectRipsResponse> {
-  console.log("request.context.colorCodedArticle", request.context.colorCodedArticle);
+  console.log("request.context.attributedArticle", request.context.attributedArticle);
 
   // 1️⃣ Clean up the article ----
-  const colorCleanedArticle = extractLexicalDisplayText(request.context.colorCodedArticle);
+  // const colorCleanedArticle = extractLexicalDisplayText(request.context.revisedArticle);
 
-  console.log("colorCleanedArticle", colorCleanedArticle);
+  // console.log("inputArticle", colorCleanedArticle);
 
   // 2️⃣ Prepare template variables ----
   const userTemplateVariables = {
-    colorCleanedArticle: colorCleanedArticle,
+    attributedArticle: request.context.attributedArticle,
     sources: request.sources,
   };
 

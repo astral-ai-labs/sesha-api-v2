@@ -18,7 +18,8 @@ import type { RipQuoteComparison } from "@/domains/drafting/common/types/primiti
  */
 interface DetectRipsContext {
   /** Article with source attribution from step 07 */
-  colorCodedArticle: string;
+  // colorCodedArticle: string;
+  attributedArticle: string;
 }
 
 /**

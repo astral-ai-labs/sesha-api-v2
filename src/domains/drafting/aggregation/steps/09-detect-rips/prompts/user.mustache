@@ -1,14 +1,15 @@
 Please analyze the following generated article against its source materials for potential plagiarism or overly similar wording.
 
 ANALYSIS INSTRUCTIONS:
-1. Read through the ENTIRE generated article systematically
-2. For each paragraph/section, check against ALL source materials
-3. Look for verbatim copying, inadequate paraphrasing, and mosaic plagiarism
-4. Document EVERY instance you find - do not stop at just 1-2 examples
-5. Be especially vigilant for subtle plagiarism that maintains original sentence structure
+1. Go through the GENERATED ARTICLE line by line, sentence by sentence - do not skip any lines
+2. For EACH line/sentence in the GENERATED ARTICLE, check it against EVERY line in ALL source materials - compare the article line to every single line in every source
+3. Be systematic: Process the article from start to finish, checking each article line against all source lines before moving to the next article line
+4. ONLY flag high-confidence rips: verbatim copying, near-verbatim copying without attribution, or very closely worded lines
+5. IGNORE structural similarities - do not flag sentences just because they have similar structure if the actual words are different
+6. EXCLUDE sentences with attribution - if a sentence mentions a source, study, report, or includes citation language (e.g., "according to", "the study found", citations in parentheses), it is NOT a rip
 
 GENERATED ARTICLE:
-{{colorCleanedArticle}}
+{{attributedArticle}}
 
 SOURCE MATERIALS:
 {{#sources.0.text}}Source 1 ({{sources.0.attribution}}):
@@ -36,4 +37,8 @@ SOURCE MATERIALS:
 
 {{/sources.5.text}}
 
-Perform a comprehensive analysis and report ALL plagiarism instances you discover. Your thoroughness in finding every problematic passage is critical.
+Perform a careful, systematic line-by-line analysis. Go through each line of the GENERATED ARTICLE and check it against every line in all sources. 
+
+IMPORTANT: For every instance of plagiarism you identify, you MUST include it in the ripComparisons array. If your analysis mentions plagiarism, near-verbatim copying, or significant verbatim phrases, those specific instances must appear in ripComparisons with the exact quotes. Do not describe plagiarism in your analysis without including the specific instances in ripComparisons.
+
+Report instances where you are very confident there is plagiarism. Avoid false positives from structural similarities or properly cited content.
