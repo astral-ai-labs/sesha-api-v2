@@ -78,14 +78,15 @@ export async function detectRips(request: DetectRipsRequest, stepConfig: Finaliz
   });
 
   // 7️⃣ Structure the output ----
-  // Note: No assistantPrompt - structured output mode handles JSON formatting automatically
+  // Note: Using structured output mode which handles JSON formatting automatically
+  // Increased maxTokens to handle longer articles with many rips
   const structuredResult = await simpleGenerateObject({
     model: stepConfig.structuredModel || DEFAULT_STRUCTURED_MODEL,
     systemPrompt: formattedSystem,
     userPrompt: formattedUser,
     schema: RipAnalysisSchema,
     temperature: 0.1,
-    maxTokens: 4000,
+    maxTokens: 8000, // Increased from 4000 to handle longer outputs with many rip comparisons
   });
 
   // 8️⃣ Calculate combined usage ----

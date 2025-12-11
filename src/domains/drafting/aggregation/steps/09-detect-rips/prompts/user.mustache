@@ -1,13 +1,17 @@
-Please analyze the following generated article against its source materials for potential RIPs (“Replicated Improper Passages”).
+Please analyze the following generated article against its source materials for potential RIPs ("Replicated Improper Passages").
 
-Remember: a RIP is any passage where the generated article content directly copies or closely mimics the wording, structure, or distinctive phrasing of a source article without proper attribution. Use the human-validated RIP examples provided in the prompt as your strict threshold: if a passage would not be added to that list, it is not a RIP.
+Remember: a RIP is any passage where the generated article content directly copies or closely mimics the wording or distinctive phrasing of a source article without proper attribution. Use the human-validated RIP examples provided in the system prompt as your **strict threshold**: if a passage matches or exceeds the similarity shown in those examples, flag it. If it doesn't clearly match, don't flag it.
 
 ANALYSIS INSTRUCTIONS:
 1. Read through the ENTIRE generated article systematically, paragraph by paragraph.
 2. For each paragraph/section, compare against ALL provided source materials.
-3. Look for passages that match or exceed the similarity shown in the human-validated RIP examples (direct copying, overly close paraphrasing, or structurally identical wording without attribution).
-4. Document EVERY passage that meets this RIP threshold—do not stop after 1–2 examples. If a passage would not qualify to be added to the human examples list, do not flag it as a RIP.
+3. Look for passages that match or exceed the similarity shown in the human-validated RIP examples. The examples show:
+   - Multiple distinctive phrases preserved word-for-word, OR
+   - Long stretches (5+ consecutive words) matching exactly, OR
+   - Overall structure AND key distinctive wording both preserved
+4. **Flag passages that clearly meet this threshold.** If a passage matches or exceeds the similarity shown in the examples, flag it. If it doesn't clearly match, don't flag it.
 5. EXCLUDE sentences with attribution - if a sentence mentions a source, study, report, or includes citation language (e.g., "according to", "the study found", citations in parentheses), it is NOT a rip.
+6. **Reject weak similarities:** Single word matches, common phrases, or passages where wording is substantially different (even if the idea is similar) are NOT rips. But if a passage clearly matches the examples, flag it.
 GENERATED ARTICLE:
 {{attributedArticle}}
 
@@ -39,6 +43,6 @@ SOURCE MATERIALS:
 
 Perform a careful, systematic line-by-line analysis. Go through each line of the GENERATED ARTICLE and check it against every line in all sources. 
 
-IMPORTANT: For every instance of plagiarism you identify, you MUST include it in the ripComparisons array. If your analysis mentions plagiarism, near-verbatim copying, or significant verbatim phrases, those specific instances must appear in ripComparisons with the exact quotes. Do not describe plagiarism in your analysis without including the specific instances in ripComparisons.
+IMPORTANT: Flag passages that clearly match the threshold shown in the examples. For every instance you identify, you MUST include it in the ripComparisons array with exact quotes. Do not describe plagiarism in your analysis without including the specific instances in ripComparisons.
 
-Report instances where you are very confident there is plagiarism. Avoid false positives from structural similarities or properly cited content.
+**Remember:** The examples show the threshold you should use. If a passage clearly matches or exceeds that level of similarity, flag it. If it doesn't clearly match, don't flag it. Be thorough—check all passages systematically. Avoid false positives from structural similarities, common phrases, or properly cited content, but don't miss passages that clearly meet the threshold.
