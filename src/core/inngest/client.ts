@@ -21,6 +21,9 @@ import { DraftingInngestEvent } from "@/domains/drafting/common/types/inngest";
 // Inngest Health Function Request Types
 import { InngestHealthInngestEvent } from "@/domains/inngest_health/function";
 
+// Next Steps Function Request Types
+import { NextStepsInngestEvent } from "@/domains/next-steps/function";
+
 // ======================================================
 // Event Schemas
 // ======================================================
@@ -29,6 +32,7 @@ type Events = {
   "drafting/trigger/aggregation": DraftingInngestEvent;
   "drafting/trigger/digestion": DraftingInngestEvent;
   "inngest_health/trigger/hello.world": InngestHealthInngestEvent;
+  "next-steps/trigger/generate": NextStepsInngestEvent;
 };
 
 /* ==========================================================================*/

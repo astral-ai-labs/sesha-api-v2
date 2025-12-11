@@ -19,27 +19,61 @@ interface NextStepsApiRequest {
   orgId: number;
   slug: string;
   version: string;
+  async?: boolean;
+}
+
+interface LinkItem {
+  id: string;    // e.g., "link_1" - used as placeholder in text
+  text: string;  // Link display text
+  url: string;   // URL or mailto:
+}
+
+interface StepItem {
+  step: string;        // Text with {link_1}, {link_2} placeholders
+  links?: LinkItem[];  // Links to replace placeholders
+}
+
+interface OtherInfo {
+  text: string;        // Text with {link_1}, {link_2} placeholders
+  links?: LinkItem[];  // Links to replace placeholders
 }
 
 interface NextStepsResponse {
-  mustDo: string[];                   // HTML formatted
-  important: string[];                // HTML formatted
-  optional: string[];                 // HTML formatted
-  otherRelevantInformation: string;   // HTML formatted
-  linksToSources: string[];           // HTML anchor (<a>) tags
+  mustDo: StepItem[];
+  important: StepItem[];
+  optional: StepItem[];
+  otherRelevantInformation: OtherInfo;
+  linksToSources: LinkItem[];
 }
 
-const NextStepsSchema = z.object({
-  mustDo: z.array(z.string()),
-  important: z.array(z.string()),
-  optional: z.array(z.string()),
-  otherRelevantInformation: z.string(),
-  linksToSources: z.array(z.string())
+// Zod Schemas
+const LinkItemSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  url: z.string(),
 });
 
-//* ==========================================================================*/
+const StepItemSchema = z.object({
+  step: z.string(),
+  links: z.array(LinkItemSchema).optional(),
+});
+
+const OtherInfoSchema = z.object({
+  text: z.string(),
+  links: z.array(LinkItemSchema).optional(),
+});
+
+const NextStepsSchema = z.object({
+  mustDo: z.array(StepItemSchema),
+  important: z.array(StepItemSchema),
+  optional: z.array(StepItemSchema),
+  otherRelevantInformation: OtherInfoSchema,
+  linksToSources: z.array(LinkItemSchema),
+});
+
+/* ==========================================================================*/
 // Public API
 /* ==========================================================================*/
 
-export type { NextStepsApiRequest, NextStepsResponse }
-export { NextStepsSchema }
+export type { NextStepsApiRequest, NextStepsResponse, LinkItem, StepItem, OtherInfo };
+export { NextStepsSchema };

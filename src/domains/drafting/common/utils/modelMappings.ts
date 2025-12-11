@@ -22,7 +22,7 @@ import { xai } from '@ai-sdk/xai';
 export const MODEL_ALIAS_MAPPING: Record<ModelAlias, ModelAndProviderAndPricing> = {
 
   // XAI models
-  "grok-4.1-fast-reasoning": { modelAlias: "grok-4.1-fast-reasoning", modelId: "grok-4.1-fast", provider: xai, providerId: "xai", inputCostPerMToken: 0.20, outputCostPerMToken: 0.50 },
+  "grok-4.1-fast-reasoning": { modelAlias: "grok-4.1-fast-reasoning", modelId: "grok-4-1-fast", provider: xai, providerId: "xai", inputCostPerMToken: 0.20, outputCostPerMToken: 0.50 },
   "grok-4.1-fast": { modelAlias: "grok-4.1-fast", modelId: "grok-4-1-fast-non-reasoning", provider: xai, providerId: "xai", inputCostPerMToken: 0.20, outputCostPerMToken: 0.50 },
   "grok-4-fast": { modelAlias: "grok-4-fast", modelId: "grok-4-fast-non-reasoning", provider: xai, providerId: "xai", inputCostPerMToken: 0.20, outputCostPerMToken: 0.50 },
   "grok-4": { modelAlias: "grok-4", modelId: "grok-4", provider: xai, providerId: "xai", inputCostPerMToken: 3, outputCostPerMToken: 15 },

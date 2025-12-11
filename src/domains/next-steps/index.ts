@@ -5,7 +5,7 @@
 /* ==========================================================================*/
 
 // Types
-export type { NextStepsApiRequest, NextStepsResponse } from "./types";
+export type { NextStepsApiRequest, NextStepsResponse, LinkItem, StepItem, OtherInfo } from "./types";
 export { NextStepsSchema } from "./types";
 
 // Operations
@@ -13,3 +13,6 @@ export { getArticleContentBySlugAndVersion } from "./operations";
 
 // Service
 export { generateNextSteps, type GenerateNextStepsResult } from "./service";
+
+// Inngest
+export { nextStepsFunction, type NextStepsInngestEvent } from "./function";

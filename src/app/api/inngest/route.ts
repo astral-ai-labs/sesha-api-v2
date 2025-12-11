@@ -17,6 +17,7 @@ import { inngest } from "@/core/inngest/client";
 import digestionPipeline from "@/domains/drafting/digestion/pipeline";
 import aggregationPipeline from "@/domains/drafting/aggregation/pipeline";
 import { helloWorld } from "@/domains/inngest_health/function";
+import { nextStepsFunction } from "@/domains/next-steps/function";
 
 /* ==========================================================================*/
 // Configuration
@@ -31,6 +32,7 @@ const inngestApi = serve({
     digestionPipeline,
     aggregationPipeline,
     helloWorld,
+    nextStepsFunction,
   ],
 });
 

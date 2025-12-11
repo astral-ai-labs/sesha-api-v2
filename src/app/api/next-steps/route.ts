@@ -12,6 +12,9 @@
 // Next.js Core ---
 import { NextRequest, NextResponse } from "next/server";
 
+// Core Modules ----
+import { inngest } from "@/core/inngest/client";
+
 // Internal Modules ----
 import type { NextStepsApiRequest } from "@/domains/next-steps";
 import { getArticleContentBySlugAndVersion, generateNextSteps } from "@/domains/next-steps";
@@ -37,17 +40,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Organization ID is required" }, { status: 400 });
     }
 
-    // 2️⃣ Get article content -----
+    // 2️⃣ Async mode: trigger Inngest function -----
+    if (data.async) {
+      const { ids } = await inngest.send({
+        name: "next-steps/trigger/generate",
+        data: { orgId: data.orgId, slug: data.slug, version: data.version },
+      });
+
+      return NextResponse.json({
+        success: true,
+        async: true,
+        runId: ids[0],
+        message: "Next steps generation started",
+      });
+    }
+
+    // 3️⃣ Sync mode: get article content -----
     const articleContent = await getArticleContentBySlugAndVersion(data.orgId, data.slug, data.version);
 
     if (!articleContent) {
       return NextResponse.json({ error: "Article not found" }, { status: 404 });
     }
 
-    // 3️⃣ Generate next steps -----
+    // 4️⃣ Generate next steps -----
     const result = await generateNextSteps(articleContent);
 
-    // 4️⃣ Return response -----
+    // 5️⃣ Return response -----
     return NextResponse.json(result.response);
   } catch (error) {
     console.error("Next steps request failed:", error);
