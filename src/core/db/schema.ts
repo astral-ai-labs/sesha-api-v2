@@ -155,6 +155,9 @@ export const articles = pgTable(
     ripAnalysis: text("rip_analysis").default(""), // Overall analysis text
     ripComparisons: jsonb("rip_comparisons").default([]), // JSON representation of QuoteComparison[]
 
+    // Next Steps - AI-generated suggestions for improving the article
+    nextSteps: jsonb("next_steps"), // nullable - JSON representation of NextStepsResponse
+
     // The user who originally created the article (triggered the AI run)
     createdByUserId: uuid("created_by_user_id").references(() => users.id),
 

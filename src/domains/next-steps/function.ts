@@ -13,7 +13,7 @@
 import { inngest } from "@/core/inngest/client";
 
 // Internal Modules ----
-import { getArticleContentBySlugAndVersion } from "./operations";
+import { getArticleContentBySlugAndVersion, saveAndPropagateNextSteps } from "./operations";
 import { generateNextSteps } from "./service";
 
 /* ==========================================================================*/
@@ -65,7 +65,29 @@ const nextStepsFunction = inngest.createFunction(
       return nextStepsResult;
     });
 
-    return { success: true, response: result.response, usage: result.usage };
+    // 3️⃣ Save and propagate to database ----
+    const saveResult = await step.run("save-next-steps", async () => {
+      const { currentUpdated, propagatedCount } = await saveAndPropagateNextSteps(
+        orgId,
+        slug,
+        version,
+        result.response
+      );
+      logger.info("Next steps saved to database", {
+        slug,
+        version,
+        currentUpdated,
+        propagatedCount,
+      });
+      return { currentUpdated, propagatedCount };
+    });
+
+    return {
+      success: true,
+      response: result.response,
+      usage: result.usage,
+      saved: saveResult,
+    };
   }
 );
 

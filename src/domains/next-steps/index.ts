@@ -9,7 +9,12 @@ export type { NextStepsApiRequest, NextStepsResponse, LinkItem, StepItem, OtherI
 export { NextStepsSchema } from "./types";
 
 // Operations
-export { getArticleContentBySlugAndVersion } from "./operations";
+export {
+  getArticleContentBySlugAndVersion,
+  saveNextStepsForVersion,
+  propagateNextStepsToSubsequentVersions,
+  saveAndPropagateNextSteps,
+} from "./operations";
 
 // Service
 export { generateNextSteps, type GenerateNextStepsResult } from "./service";

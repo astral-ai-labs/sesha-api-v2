@@ -17,7 +17,7 @@ import { inngest } from "@/core/inngest/client";
 
 // Internal Modules ----
 import type { NextStepsApiRequest } from "@/domains/next-steps";
-import { getArticleContentBySlugAndVersion, generateNextSteps } from "@/domains/next-steps";
+import { getArticleContentBySlugAndVersion, generateNextSteps, saveAndPropagateNextSteps } from "@/domains/next-steps";
 
 /* ==========================================================================*/
 // Route Handler
@@ -65,7 +65,10 @@ export async function POST(request: NextRequest) {
     // 4️⃣ Generate next steps -----
     const result = await generateNextSteps(articleContent);
 
-    // 5️⃣ Return response -----
+    // 5️⃣ Save to database and propagate -----
+    await saveAndPropagateNextSteps(data.orgId, data.slug, data.version, result.response);
+
+    // 6️⃣ Return response -----
     return NextResponse.json(result.response);
   } catch (error) {
     console.error("Next steps request failed:", error);
