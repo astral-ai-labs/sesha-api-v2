@@ -9,12 +9,14 @@
 // Imports
 /* ==========================================================================*/
 
+// External Packages ----
+import { generateText, Tool } from "ai";
+import { xai, xaiTools } from "@ai-sdk/xai";
+
 // Core AI Modules ----
 import { formatPrompt, PromptType, readAllPrompts } from "@/core/ai/prompts";
-import { simpleGenerateText } from "@/core/ai/call/generateText";
 
 // Internal Modules ----
-import { MODEL_ALIAS_MAPPING } from "@/domains/drafting/common/utils/modelMappings";
 import type { NextStepsResponse } from "./types";
 import { NextStepsSchema } from "./types";
 
@@ -22,7 +24,7 @@ import { NextStepsSchema } from "./types";
 // Constants
 /* ==========================================================================*/
 
-const NEXT_STEPS_MODEL = MODEL_ALIAS_MAPPING["grok-4.1-fast-reasoning"];
+const NEXT_STEPS_MODEL = "grok-4-1-fast";
 
 /* ==========================================================================*/
 // Types
@@ -52,27 +54,43 @@ async function generateNextSteps(article: string): Promise<GenerateNextStepsResu
   const formattedSystem = formatPrompt(prompts.systemTemplate, undefined, PromptType.SYSTEM);
   const formattedUser = formatPrompt(prompts.userTemplate, { article }, PromptType.USER);
 
-  // 3️⃣ Generate next steps with Grok ----
-  const result = await simpleGenerateText({
-    model: NEXT_STEPS_MODEL.modelId as string,
-    provider: NEXT_STEPS_MODEL.provider,
-    systemPrompt: formattedSystem,
-    userPrompt: formattedUser,
+  // 3️⃣ Generate next steps with Grok Responses API ----
+  const webSearchTool = xai.tools.webSearch();
+  const xSearchTool = xai.tools.xSearch();
+
+  const result = await generateText({
+    model: xai.responses(NEXT_STEPS_MODEL),
+    system: formattedSystem,
+    prompt: formattedUser,
     temperature: 0.7,
-    maxTokens: 8000,
+    tools: {
+      web_search: xaiTools.webSearch() as unknown as Tool<Record<string, never>, { query: string; sources: Array<{ title: string; url: string; snippet: string }> }>,
+      x_search: xaiTools.xSearch() as unknown as Tool<Record<string, never>, { query: string; posts: Array<{ author: string; text: string; url: string; likes: number }> }>,
+    },
   });
 
   // 4️⃣ Parse JSON response ----
-  const cleanedText = result.text.trim().replace(/^```json\n?/, "").replace(/\n?```$/, "");
+  const cleanedText = result.text
+    .trim()
+    .replace(/^```json\n?/, "")
+    .replace(/\n?```$/, "");
   const parsed = NextStepsSchema.safeParse(JSON.parse(cleanedText));
-  
+
   if (!parsed.success) {
     throw new Error(`Failed to parse next steps response: ${parsed.error.message}`);
   }
 
+  const inputTokens = result.usage.inputTokens ?? 0;
+  const outputTokens = result.usage.outputTokens ?? 0;
+  const totalTokens = inputTokens + outputTokens;
+
   return {
     response: parsed.data,
-    usage: result.usage,
+    usage: {
+      inputTokens,
+      outputTokens,
+      totalTokens,
+    },
   };
 }
 
