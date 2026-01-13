@@ -72,7 +72,11 @@ async function propagateNextStepsToSubsequentVersions(
 ): Promise<number> {
   // 1️⃣ Get all subsequent versions ordered ascending ----
   const subsequentVersions = await db
-    .select({ version: articles.version, nextStepsTriggeredAtVersion: articles.nextStepsTriggeredAtVersion })
+    .select({ 
+      version: articles.version, 
+      nextSteps: articles.nextSteps,
+      nextStepsTriggeredAtVersion: articles.nextStepsTriggeredAtVersion 
+    })
     .from(articles)
     .where(and(eq(articles.orgId, orgId), eq(articles.slug, slug), gt(articles.version, currentVersion)))
     .orderBy(asc(articles.version));
@@ -81,10 +85,10 @@ async function propagateNextStepsToSubsequentVersions(
     return 0;
   }
 
-  // 2️⃣ Find versions to update (where nextStepsTriggeredAtVersion equals current version) ----
+  // 2️⃣ Find versions to update (where nextSteps is null OR nextStepsTriggeredAtVersion equals current version) ----
   const versionsToUpdate: string[] = [];
   for (const row of subsequentVersions) {
-    if (row.nextStepsTriggeredAtVersion === currentVersion) {
+    if (row.nextSteps === null || row.nextStepsTriggeredAtVersion === currentVersion) {
       versionsToUpdate.push(row.version);
     }
   }
