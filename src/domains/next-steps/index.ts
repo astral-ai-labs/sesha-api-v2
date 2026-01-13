@@ -17,7 +17,7 @@ export {
 } from "./operations";
 
 // Service
-export { generateNextSteps, type GenerateNextStepsResult } from "./service";
+export { generateNextSteps, generateNextStepsStreaming, type GenerateNextStepsResult, type StreamingCallbacks } from "./service";
 
 // Inngest
 export { nextStepsFunction, type NextStepsInngestEvent } from "./function";

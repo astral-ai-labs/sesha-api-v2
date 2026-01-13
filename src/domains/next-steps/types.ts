@@ -19,6 +19,7 @@ interface NextStepsApiRequest {
   orgId: number;
   slug: string;
   version: string;
+  userId: string;
   async?: boolean;
 }
 

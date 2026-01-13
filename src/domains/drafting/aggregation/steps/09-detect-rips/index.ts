@@ -22,7 +22,6 @@ import { DEFAULT_STRUCTURED_MODEL } from "@/domains/drafting/common/defaults";
 import { z } from "zod";
 
 // Local Modules ----
-import { extractLexicalDisplayText } from "./helpers";
 import type { DetectRipsRequest, DetectRipsResponse } from "./types";
 
 /* ==========================================================================*/

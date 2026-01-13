@@ -3,7 +3,7 @@
 /* ==========================================================================*/
 
 // External Packages ---
-import type { Provider } from "ai";
+import type { ProviderV3 as Provider } from "@ai-sdk/provider";
 
 // Core (App-wide) -----
 import { ingestionTypeEnum, lengthEnum, blobsEnum, modelEnum } from "@/core/db/schema";

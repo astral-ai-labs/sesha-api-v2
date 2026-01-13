@@ -25,6 +25,7 @@ interface NextStepsInngestEvent {
     orgId: number;
     slug: string;
     version: string;
+    userId: string;
   };
 }
 
@@ -36,9 +37,9 @@ const nextStepsFunction = inngest.createFunction(
   { id: "generate-next-steps", retries: 2 },
   { event: "next-steps/trigger/generate" },
   async ({ event, step, logger }) => {
-    const { orgId, slug, version } = event.data;
+    const { orgId, slug, version, userId } = event.data;
 
-    logger.info("Next steps generation started", { orgId, slug, version });
+    logger.info("Next steps generation started", { orgId, slug, version, userId });
 
     // 1️⃣ Fetch article content ----
     const articleContent = await step.run("fetch-article-content", async () => {
@@ -71,11 +72,13 @@ const nextStepsFunction = inngest.createFunction(
         orgId,
         slug,
         version,
-        result.response
+        result.response,
+        userId
       );
       logger.info("Next steps saved to database", {
         slug,
         version,
+        userId,
         currentUpdated,
         propagatedCount,
       });

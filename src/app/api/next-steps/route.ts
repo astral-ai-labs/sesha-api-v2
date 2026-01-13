@@ -17,7 +17,8 @@ import { inngest } from "@/core/inngest/client";
 
 // Internal Modules ----
 import type { NextStepsApiRequest } from "@/domains/next-steps";
-import { getArticleContentBySlugAndVersion, generateNextSteps, saveAndPropagateNextSteps } from "@/domains/next-steps";
+import { getArticleContentBySlugAndVersion, generateNextStepsStreaming } from "@/domains/next-steps";
+import { formatPrompt, PromptType, readAllPrompts } from "@/core/ai/prompts";
 
 /* ==========================================================================*/
 // Route Handler
@@ -25,7 +26,6 @@ import { getArticleContentBySlugAndVersion, generateNextSteps, saveAndPropagateN
 
 export async function POST(request: NextRequest) {
   try {
-    // 1️⃣ Validate request -----
     const data: NextStepsApiRequest = await request.json();
 
     if (!data.slug?.trim()) {
@@ -40,11 +40,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Organization ID is required" }, { status: 400 });
     }
 
-    // 2️⃣ Async mode: trigger Inngest function -----
+    if (!data.userId?.trim()) {
+      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+    }
+
     if (data.async) {
       const { ids } = await inngest.send({
         name: "next-steps/trigger/generate",
-        data: { orgId: data.orgId, slug: data.slug, version: data.version },
+        data: { orgId: data.orgId, slug: data.slug, version: data.version, userId: data.userId },
       });
 
       return NextResponse.json({
@@ -55,30 +58,33 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 3️⃣ Sync mode: get article content -----
     const articleContent = await getArticleContentBySlugAndVersion(data.orgId, data.slug, data.version);
-
     if (!articleContent) {
       return NextResponse.json({ error: "Article not found" }, { status: 404 });
     }
 
-    // 4️⃣ Generate next steps -----
-    const result = await generateNextSteps(articleContent);
+    const prompts = await readAllPrompts("src/domains/next-steps");
 
-    // 5️⃣ Save to database and propagate -----
-    await saveAndPropagateNextSteps(data.orgId, data.slug, data.version, result.response);
+    if (!prompts.systemTemplate || !prompts.userTemplate) {
+      throw new Error("Required prompts not found");
+    }
 
-    // 6️⃣ Return response -----
-    return NextResponse.json(result.response);
-  } catch (error) {
-    console.error("Next steps request failed:", error);
+    const systemPrompt = formatPrompt(prompts.systemTemplate, undefined, PromptType.SYSTEM);
+    const userPrompt = formatPrompt(prompts.userTemplate, { article: articleContent }, PromptType.USER);
 
-    return NextResponse.json(
-      {
-        error: "Failed to generate next steps",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
+    if (!systemPrompt || !userPrompt) {
+      throw new Error("Failed to format prompts");
+    }
+
+    const streamResult = generateNextStepsStreaming(
+      systemPrompt, 
+      userPrompt,
+      { orgId: data.orgId, slug: data.slug, version: data.version, userId: data.userId }
     );
+    
+    return streamResult.toTextStreamResponse();
+  } catch (error) {
+    console.error("Failed to generate next steps", error);
+    return new Response(JSON.stringify({ error: "Failed to generate next steps" }), { status: 500 });
   }
 }

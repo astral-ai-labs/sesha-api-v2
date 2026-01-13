@@ -10,7 +10,8 @@
 /* ==========================================================================*/
 
 // External Packages ---
-import { generateText, LanguageModel, Provider } from "ai";
+import { generateText, LanguageModel } from "ai";
+import { ProviderV3 as Provider } from "@ai-sdk/provider";
 import { SystemModelMessage, UserModelMessage, AssistantModelMessage } from "ai";
 import { NonRetriableError } from "inngest";
 
@@ -76,6 +77,7 @@ async function simpleGenerateText(config: GenerateTextConfig): Promise<GenerateT
   try {
     // Helper function to avoid code duplication
     const tryGenerate = async (modelProvider: Provider, modelName: string) => {
+      
       const result = await generateText({
         model: modelProvider.languageModel(modelName),
         messages,

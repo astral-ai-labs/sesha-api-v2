@@ -26,9 +26,7 @@ export const headlineAuthorEnum = pgEnum("headline_author", ["human", "ai"]);
 export const blobsEnum = pgEnum("blobs", ["1", "2", "3", "4", "5", "6"]);
 export const lengthEnum = pgEnum("length", ["100-250", "400-550", "700-850", "1000-1200"]);
 export const modelEnum = pgEnum("model", [
-
   // Grok Models
-  "grok-4.1-fast-reasoning",
   "grok-4.1-fast",
   "grok-4-fast",
   "grok-4",
@@ -48,13 +46,7 @@ export const modelEnum = pgEnum("model", [
   "sonnet-4.5-sonnet-4.0",
   "sonnet-4.5-sonnet-4.0-headlines",
 ]);
-export const modelPresetEnum = pgEnum("model_preset", [
-  "sonnet-4.5-4.0-mix",
-  "opus-4.5-all",
-  "opus-4.5-sonnet-4.0-mix",
-  "opus-4.5-opus-4.0-mix",
-  "sonnet-3.7-all",
-]);
+export const modelPresetEnum = pgEnum("model_preset", ["sonnet-4.5-4.0-mix", "opus-4.5-all", "opus-4.5-sonnet-4.0-mix", "opus-4.5-opus-4.0-mix", "sonnet-3.7-all"]);
 export const ingestionTypeEnum = pgEnum("ingestion_type", ["digest", "aggregate"]);
 
 /* ==========================================================================*/
@@ -155,8 +147,11 @@ export const articles = pgTable(
     ripAnalysis: text("rip_analysis").default(""), // Overall analysis text
     ripComparisons: jsonb("rip_comparisons").default([]), // JSON representation of QuoteComparison[]
 
-    // Next Steps - AI-generated suggestions for improving the article
-    nextSteps: jsonb("next_steps"), // nullable - JSON representation of NextStepsResponse
+    // Next Steps (from Grok/LLM)
+    nextSteps: jsonb("next_steps"), // Nullable JSONB for next steps response
+    // articles table update
+    nextStepsTriggeredByUserId: uuid("next_steps_triggered_by_user_id").references(() => users.id),
+    nextStepsTriggeredAtVersion: numeric("next_steps_triggered_at_version", { precision: 4, scale: 2 }),
 
     // The user who originally created the article (triggered the AI run)
     createdByUserId: uuid("created_by_user_id").references(() => users.id),
@@ -251,6 +246,9 @@ export const userRelations = relations(users, ({ one, many }) => ({
   // Articles this user has edited
   changedArticles: many(articles, { relationName: "changedByUser" }),
 
+  // Articles this user triggered the next steps for
+  nextStepsTriggeredArticles: many(articles, { relationName: "nextStepsTriggeredByUser" }),
+
   // Runs triggered by this user
   triggeredRuns: many(runs, { relationName: "triggeredByUser" }),
 }));
@@ -284,6 +282,13 @@ export const articleRelations = relations(articles, ({ one, many }) => ({
     fields: [articles.changedByUserId],
     references: [users.id],
     relationName: "changedByUser",
+  }),
+
+  // Audit relation - who triggered the next steps
+  nextStepsTriggeredBy: one(users, {
+    fields: [articles.nextStepsTriggeredByUserId],
+    references: [users.id],
+    relationName: "nextStepsTriggeredByUser",
   }),
 
   // Normalized sources

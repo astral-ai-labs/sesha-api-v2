@@ -10,7 +10,7 @@
 /* ==========================================================================*/
 
 // External Packages ---
-import { eq, and, gt, asc, isNull } from "drizzle-orm";
+import { eq, and, gt, asc } from "drizzle-orm";
 
 // Internal Modules ----
 import { db, articles } from "@/core/db";
@@ -44,27 +44,35 @@ async function saveNextStepsForVersion(
   orgId: number,
   slug: string,
   version: string,
-  nextSteps: NextStepsResponse
+  nextSteps: NextStepsResponse,
+  triggeredByUserId: string,
+  triggeredAtVersion: string
 ): Promise<void> {
   await db
     .update(articles)
-    .set({ nextSteps })
+    .set({
+      nextSteps,
+      nextStepsTriggeredByUserId: triggeredByUserId,
+      nextStepsTriggeredAtVersion: triggeredAtVersion,
+    })
     .where(and(eq(articles.orgId, orgId), eq(articles.slug, slug), eq(articles.version, version)));
 }
 
 /**
- * Propagates next steps to subsequent versions until one has existing next_steps.
+ * Propagates next steps to subsequent versions that were triggered at the current version.
  * Returns the number of versions updated.
  */
 async function propagateNextStepsToSubsequentVersions(
   orgId: number,
   slug: string,
   currentVersion: string,
-  nextSteps: NextStepsResponse
+  nextSteps: NextStepsResponse,
+  triggeredByUserId: string,
+  triggeredAtVersion: string
 ): Promise<number> {
   // 1️⃣ Get all subsequent versions ordered ascending ----
   const subsequentVersions = await db
-    .select({ version: articles.version, nextSteps: articles.nextSteps })
+    .select({ version: articles.version, nextStepsTriggeredAtVersion: articles.nextStepsTriggeredAtVersion })
     .from(articles)
     .where(and(eq(articles.orgId, orgId), eq(articles.slug, slug), gt(articles.version, currentVersion)))
     .orderBy(asc(articles.version));
@@ -73,13 +81,12 @@ async function propagateNextStepsToSubsequentVersions(
     return 0;
   }
 
-  // 2️⃣ Find versions to update (until we hit one with existing next_steps) ----
+  // 2️⃣ Find versions to update (where nextStepsTriggeredAtVersion equals current version) ----
   const versionsToUpdate: string[] = [];
   for (const row of subsequentVersions) {
-    if (row.nextSteps !== null) {
-      break; // Stop at first version with existing next_steps
+    if (row.nextStepsTriggeredAtVersion === currentVersion) {
+      versionsToUpdate.push(row.version);
     }
-    versionsToUpdate.push(row.version);
   }
 
   if (!versionsToUpdate.length) {
@@ -90,7 +97,11 @@ async function propagateNextStepsToSubsequentVersions(
   for (const version of versionsToUpdate) {
     await db
       .update(articles)
-      .set({ nextSteps })
+      .set({
+        nextSteps,
+        nextStepsTriggeredByUserId: triggeredByUserId,
+        nextStepsTriggeredAtVersion: triggeredAtVersion,
+      })
       .where(and(eq(articles.orgId, orgId), eq(articles.slug, slug), eq(articles.version, version)));
   }
 
@@ -105,13 +116,21 @@ async function saveAndPropagateNextSteps(
   orgId: number,
   slug: string,
   version: string,
-  nextSteps: NextStepsResponse
+  nextSteps: NextStepsResponse,
+  triggeredByUserId: string
 ): Promise<{ currentUpdated: boolean; propagatedCount: number }> {
   // 1️⃣ Save to current version ----
-  await saveNextStepsForVersion(orgId, slug, version, nextSteps);
+  await saveNextStepsForVersion(orgId, slug, version, nextSteps, triggeredByUserId, version);
 
   // 2️⃣ Propagate to subsequent versions ----
-  const propagatedCount = await propagateNextStepsToSubsequentVersions(orgId, slug, version, nextSteps);
+  const propagatedCount = await propagateNextStepsToSubsequentVersions(
+    orgId,
+    slug,
+    version,
+    nextSteps,
+    triggeredByUserId,
+    version
+  );
 
   return { currentUpdated: true, propagatedCount };
 }

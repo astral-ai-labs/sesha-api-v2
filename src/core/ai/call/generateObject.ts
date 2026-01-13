@@ -10,7 +10,7 @@
 /* ==========================================================================*/
 
 // External Packages ---
-import { generateObject } from "ai";
+import { generateText, Output  } from "ai";
 import { z } from "zod";
 
 import {openai} from "@ai-sdk/openai";
@@ -58,19 +58,19 @@ async function simpleGenerateObject<T>(config: GenerateObjectConfig<T>): Promise
   const finalModel = config.model.toString();
 
   try {
-    const result = await generateObject({
+    const result = await generateText({
       model: openai(finalModel),
       system: config.systemPrompt,
       prompt: config.userPrompt,
       ...(config.assistantPrompt ? { assistant: config.assistantPrompt } : {}),
-      schema: config.schema,
+      output: Output.object({ schema: config.schema }),
       temperature: config.temperature,
       maxOutputTokens: config.maxTokens,
     });
 
     // 2️⃣ Parse response -----
     return {
-      object: result.object,
+      object: result.output,
       usage: {
         inputTokens: result.usage.inputTokens ?? 0,
         outputTokens: result.usage.outputTokens ?? 0,
