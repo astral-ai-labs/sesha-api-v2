@@ -20,7 +20,7 @@ import { inngest } from "@/core/inngest/client";
 
 // Internal Modules ----
 import type { NextStepsApiRequest } from "@/domains/next-steps";
-import { getArticleContentBySlugAndVersion, generateNextStepsStreaming, generateNextStepsStreaming2 } from "@/domains/next-steps";
+import { getArticleContentBySlugAndVersion, generateNextStepsStreaming2 } from "@/domains/next-steps";
 
 /* ==========================================================================*/
 // Prompt Template

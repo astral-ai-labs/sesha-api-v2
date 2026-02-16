@@ -149,8 +149,7 @@ function generateNextStepsStreaming2(prompt: string, articleMetadata: ArticleMet
         return;
       }
 
-      let sources: string[] = [];
-
+      const sources: string[] = [];
       if (finishResult.sources && finishResult.sources.length > 0) {
         for (const source of finishResult.sources) {
           if (source.sourceType === "url") {
@@ -167,14 +166,7 @@ function generateNextStepsStreaming2(prompt: string, articleMetadata: ArticleMet
       console.log("Sources of the response:", response.sources);
 
 
-      // 3️⃣ Calculate usage ----
-      const usage = {
-        inputTokens: finishResult.usage.inputTokens ?? 0,
-        outputTokens: finishResult.usage.outputTokens ?? 0,
-        totalTokens: finishResult.usage.totalTokens ?? (finishResult.usage.inputTokens ?? 0) + (finishResult.usage.outputTokens ?? 0),
-      };
-
-      // 4️⃣ Save and propagate next steps ----
+      // 3️⃣ Save and propagate next steps ----
       await saveAndPropagateNextSteps(articleMetadata.orgId, articleMetadata.slug, articleMetadata.version, response, articleMetadata.userId);
 
     },
