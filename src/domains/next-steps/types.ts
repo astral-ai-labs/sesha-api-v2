@@ -47,6 +47,13 @@ interface NextStepsResponse {
   linksToSources: LinkItem[];
 }
 
+interface NextStepsResponse2 {
+  mustDo: string[];
+  important: string[];
+  optional: string[];
+  sources: string[];
+}
+
 // Zod Schemas
 const LinkItemSchema = z.object({
   id: z.string(),
@@ -72,9 +79,16 @@ const NextStepsSchema = z.object({
   linksToSources: z.array(LinkItemSchema),
 });
 
+const NextStepsSchema2 = z.object({
+  mustDo: z.array(z.string()),
+  important: z.array(z.string()),
+  optional: z.array(z.string()),
+});
+
+
 /* ==========================================================================*/
 // Public API
 /* ==========================================================================*/
 
-export type { NextStepsApiRequest, NextStepsResponse, LinkItem, StepItem, OtherInfo };
-export { NextStepsSchema };
+export type { NextStepsApiRequest, NextStepsResponse, NextStepsResponse2, LinkItem, StepItem, OtherInfo };
+export { NextStepsSchema, NextStepsSchema2 };

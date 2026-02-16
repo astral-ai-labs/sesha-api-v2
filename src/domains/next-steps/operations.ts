@@ -14,7 +14,7 @@ import { eq, and, gt, asc } from "drizzle-orm";
 
 // Internal Modules ----
 import { db, articles } from "@/core/db";
-import type { NextStepsResponse } from "./types";
+import type { NextStepsResponse, NextStepsResponse2 } from "./types";
 
 /* ==========================================================================*/
 // Implementation
@@ -44,7 +44,7 @@ async function saveNextStepsForVersion(
   orgId: number,
   slug: string,
   version: string,
-  nextSteps: NextStepsResponse,
+  nextSteps: NextStepsResponse | NextStepsResponse2,
   triggeredByUserId: string,
   triggeredAtVersion: string
 ): Promise<void> {
@@ -66,7 +66,7 @@ async function propagateNextStepsToSubsequentVersions(
   orgId: number,
   slug: string,
   currentVersion: string,
-  nextSteps: NextStepsResponse,
+  nextSteps: NextStepsResponse | NextStepsResponse2,
   triggeredByUserId: string,
   triggeredAtVersion: string
 ): Promise<number> {
@@ -120,7 +120,7 @@ async function saveAndPropagateNextSteps(
   orgId: number,
   slug: string,
   version: string,
-  nextSteps: NextStepsResponse,
+  nextSteps: NextStepsResponse | NextStepsResponse2,
   triggeredByUserId: string
 ): Promise<{ currentUpdated: boolean; propagatedCount: number }> {
   // 1️⃣ Save to current version ----
