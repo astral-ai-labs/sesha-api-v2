@@ -33,6 +33,7 @@ export const MODEL_ALIAS_MAPPING: Record<ModelAlias, ModelAndProviderAndPricing>
   "opus-4": { modelAlias: "opus-4", modelId: "claude-opus-4-20250514", provider: anthropic, providerId: "anthropic", inputCostPerMToken: 15, outputCostPerMToken: 75 },
   "opus-4.1": { modelAlias: "opus-4.1", modelId: "claude-opus-4-1-20250805", provider: anthropic, providerId: "anthropic", inputCostPerMToken: 15, outputCostPerMToken: 75 },
   "opus-4.5": { modelAlias: "opus-4.5", modelId: "claude-opus-4-5-20251101", provider: anthropic, providerId: "anthropic", inputCostPerMToken: 5, outputCostPerMToken: 25 },
+  "opus-4.6": { modelAlias: "opus-4.6", modelId: "claude-opus-4-6", provider: anthropic, providerId: "anthropic", inputCostPerMToken: 5, outputCostPerMToken: 25 },
 
   // Sonnet models
   "sonnet-3.7": { modelAlias: "sonnet-3.7", modelId: "claude-3-7-sonnet-20250219", provider: anthropic, providerId: "anthropic", inputCostPerMToken: 3, outputCostPerMToken: 15 },
@@ -54,6 +55,7 @@ export const STRUCTURED_MODEL_MAPPING: Record<ModelAlias, string> = {
   "opus-4": "gpt-4o",
   "opus-4.1": "gpt-4o",
   "opus-4.5": "gpt-4o",
+  "opus-4.6": "gpt-4o",
   "sonnet-3.7": "gpt-4o",
   "sonnet-4": "gpt-4o",
   "sonnet-4.5": "gpt-4o",

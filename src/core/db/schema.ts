@@ -38,6 +38,7 @@ export const modelEnum = pgEnum("model", [
   "opus-4",
   "opus-4.1",
   "opus-4.5",
+  "opus-4.6",
 
   // Sonnet Models
   "sonnet-3.7",

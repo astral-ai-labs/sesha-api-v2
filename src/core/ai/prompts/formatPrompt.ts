@@ -24,9 +24,23 @@ import { PromptType } from "./types";
 /**
  * Format a prompt template with variables using Mustache templating.
  */
-function formatPrompt(promptTemplate?: string, variables?: Record<string, unknown>, type?: PromptType.SYSTEM | PromptType.ASSISTANT): string | undefined;
-function formatPrompt(promptTemplate: string, variables: Record<string, unknown> | undefined, type: PromptType.USER): string;
-function formatPrompt(promptTemplate?: string, variables?: Record<string, unknown>, type: PromptType = PromptType.SYSTEM): string | undefined {
+function formatPrompt(
+  promptTemplate?: string,
+  variables?: Record<string, unknown>,
+  type?: PromptType.SYSTEM | PromptType.ASSISTANT,
+  modelId?: string
+): string | undefined;
+function formatPrompt(promptTemplate: string, variables: Record<string, unknown> | undefined, type: PromptType.USER, modelId?: string): string;
+function formatPrompt(
+  promptTemplate?: string,
+  variables?: Record<string, unknown>,
+  type: PromptType = PromptType.SYSTEM,
+  modelId?: string
+): string | undefined {
+  if (type === PromptType.ASSISTANT && modelId && modelId.includes("opus-4-6")) {
+    return undefined;
+  }
+
   if (!promptTemplate) return undefined;
   if (!variables) return promptTemplate;
 

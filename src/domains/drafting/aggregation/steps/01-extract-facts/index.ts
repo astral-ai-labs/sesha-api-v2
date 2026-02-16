@@ -44,7 +44,7 @@ export async function extractFacts(request: ExtractFactsRequest, stepConfig: Fin
 
   const formattedSystem = formatPrompt(prompts.systemTemplate, userTemplateVariables, PromptType.SYSTEM);
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
-  const formattedAssistant = formatPrompt(prompts.assistantTemplate, userTemplateVariables, PromptType.ASSISTANT);
+  const formattedAssistant = formatPrompt(prompts.assistantTemplate, userTemplateVariables, PromptType.ASSISTANT, stepConfig.modelAndProvider.modelId);
 
   // 4️⃣ Log final prompts before AI call -----
   verboseLogger?.logStepPrompts("01-extract-facts", {

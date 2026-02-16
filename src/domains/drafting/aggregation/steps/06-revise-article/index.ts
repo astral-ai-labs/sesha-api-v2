@@ -38,7 +38,7 @@ async function reviseArticle(request: ReviseArticleRequest, stepConfig: Finalize
 
   const formattedSystem = formatPrompt(prompts.systemTemplate, undefined, PromptType.SYSTEM);
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
-  const formattedAssistant = formatPrompt(prompts.assistantTemplate, undefined, PromptType.ASSISTANT);
+  const formattedAssistant = formatPrompt(prompts.assistantTemplate, undefined, PromptType.ASSISTANT, stepConfig.modelAndProvider.modelId);
 
   // 3️⃣ Log final prompts before AI call ----
   verboseLogger?.logStepPrompts(stepConfig.stepName, {

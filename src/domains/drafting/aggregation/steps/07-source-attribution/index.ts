@@ -51,7 +51,7 @@ export async function addSourceAttribution(request: SourceAttributionRequest, st
 
   const formattedSystem = formatPrompt(prompts.systemTemplate, systemTemplateVariables, PromptType.SYSTEM);
   const formattedUser = formatPrompt(prompts.userTemplate, userTemplateVariables, PromptType.USER);
-  const formattedAssistant = formatPrompt(prompts.assistantTemplate, assistantTemplateVariables, PromptType.ASSISTANT);
+  const formattedAssistant = formatPrompt(prompts.assistantTemplate, assistantTemplateVariables, PromptType.ASSISTANT, stepConfig.modelAndProvider.modelId);
 
   // 4️⃣ Log final prompts before AI call ----
   verboseLogger?.logStepPrompts(stepConfig.stepName, {
