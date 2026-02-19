@@ -37,7 +37,7 @@ function formatPrompt(
   type: PromptType = PromptType.SYSTEM,
   modelId?: string
 ): string | undefined {
-  if (type === PromptType.ASSISTANT && modelId && modelId.includes("opus-4-6")) {
+  if (type === PromptType.ASSISTANT && modelId && (modelId.includes("opus-4-6") || modelId.includes("sonnet-4-6"))) {
     return undefined;
   }
 

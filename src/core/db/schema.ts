@@ -44,6 +44,7 @@ export const modelEnum = pgEnum("model", [
   "sonnet-3.7",
   "sonnet-4",
   "sonnet-4.5",
+  "sonnet-4.6",
   "sonnet-4.5-sonnet-4.0",
   "sonnet-4.5-sonnet-4.0-headlines",
 ]);

@@ -39,6 +39,7 @@ export const MODEL_ALIAS_MAPPING: Record<ModelAlias, ModelAndProviderAndPricing>
   "sonnet-3.7": { modelAlias: "sonnet-3.7", modelId: "claude-3-7-sonnet-20250219", provider: anthropic, providerId: "anthropic", inputCostPerMToken: 3, outputCostPerMToken: 15 },
   "sonnet-4": { modelAlias: "sonnet-4", modelId: "claude-sonnet-4-20250514", provider: anthropic, providerId: "anthropic", inputCostPerMToken: 3, outputCostPerMToken: 15 },
   "sonnet-4.5": { modelAlias: "sonnet-4.5", modelId: "claude-sonnet-4-5-20250929", provider: anthropic, providerId: "anthropic", inputCostPerMToken: 3, outputCostPerMToken: 15 },
+  "sonnet-4.6": { modelAlias: "sonnet-4.6", modelId: "claude-sonnet-4-6", provider: anthropic, providerId: "anthropic", inputCostPerMToken: 3, outputCostPerMToken: 15 },
   "sonnet-4.5-sonnet-4.0": { modelAlias: "sonnet-4.5-sonnet-4.0", modelId: "claude-sonnet-4-20250514", provider: anthropic, providerId: "anthropic", inputCostPerMToken: 3, outputCostPerMToken: 15 },
   "sonnet-4.5-sonnet-4.0-headlines": { modelAlias: "sonnet-4.5-sonnet-4.0-headlines", modelId: "claude-sonnet-4-20250514", provider: anthropic, providerId: "anthropic", inputCostPerMToken: 3, outputCostPerMToken: 15 },
 } as const;
@@ -59,6 +60,7 @@ export const STRUCTURED_MODEL_MAPPING: Record<ModelAlias, string> = {
   "sonnet-3.7": "gpt-4o",
   "sonnet-4": "gpt-4o",
   "sonnet-4.5": "gpt-4o",
+  "sonnet-4.6": "gpt-4o",
   "sonnet-4.5-sonnet-4.0": "gpt-4o",
   "sonnet-4.5-sonnet-4.0-headlines": "gpt-4o",
 } as const;
